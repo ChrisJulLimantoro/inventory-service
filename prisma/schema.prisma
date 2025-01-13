@@ -1,0 +1,104 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Category{
+  id          String @id @db.Uuid @default(uuid())
+  code        String
+  name        String
+  purity      String
+  metal_type  Int // 0: Gold, 1: Silver, 2: Red Gold, 3: White Gold, 4: Platinum
+  description String? @db.Text
+  company_id  String @db.Uuid
+
+  types Type[]
+  company Company @relation(fields: [company_id], references: [id])
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  deleted_at DateTime?
+
+  @@index([deleted_at])
+}
+
+model Type{
+  id          String @id @db.Uuid @default(uuid())
+  code        String
+  name        String
+  description String? @db.Text
+  category_id String @db.Uuid
+
+  category Category @relation(fields: [category_id], references: [id])
+  products Product[]
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  deleted_at DateTime?
+
+  @@index([deleted_at])
+}
+
+model Product{
+  id          String @id @db.Uuid @default(uuid())
+  code        String
+  name        String
+  description String? @db.Text
+  price       Decimal @db.Decimal(65, 20)
+  is_active   Boolean @default(true)
+  type_id     String @db.Uuid
+  store_id    String @db.Uuid
+
+  type Type @relation(fields: [type_id], references: [id])
+  store Store @relation(fields: [store_id], references: [id])
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  deleted_at DateTime?
+
+  @@index([deleted_at])
+}
+
+model Company {
+  id       String         @id @db.Uuid @default(uuid())
+  name     String
+  code     String
+
+  stores Store[]
+  categories Category[]
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  deleted_at DateTime?
+
+  @@map("companies")  
+  @@index([deleted_at])
+}
+
+model Store {
+  id      String         @id @db.Uuid @default(uuid())
+  code  String
+  name     String
+  company_id String @db.Uuid
+
+  company Company @relation(fields: [company_id], references: [id])
+  products Product[]
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  deleted_at DateTime?
+
+  @@map("stores")
+  @@index([deleted_at])
+  @@index([company_id])
+}
