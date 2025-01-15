@@ -15,6 +15,17 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
           },
         },
       },
+      {
+        name: 'MARKETPLACE',
+        transport: Transport.RMQ,
+        options: {
+          urls: ['amqp://localhost:5672'],
+          queue: 'marketplace_service_queue',
+          queueOptions: {
+            durable: true,
+          },
+        },
+      },
     ]),
   ],
   exports: [ClientsModule],
