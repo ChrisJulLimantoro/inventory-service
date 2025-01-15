@@ -29,7 +29,7 @@ export class TypeController {
   async create(@Payload() data: any): Promise<CustomResponse> {
     const createData = data.body;
     console.log(data.params);
-    createData.owner_id = 'data.params.user.id';
+    createData.owner_id = data.params.user.id;
 
     const response = await this.service.create(createData);
     if (response.success) {

@@ -6,7 +6,10 @@ import { ProductService } from './product.service';
 
 @Controller('product')
 export class ProductController {
-  constructor(private readonly service: ProductService) {}
+  constructor(
+    private readonly service: ProductService,
+    @Inject('MARKETPLACE') private readonly marketplaceClient: ClientProxy,
+  ) {}
 
   @MessagePattern({ cmd: 'get:product' })
   @Describe('Get all product')
@@ -26,9 +29,14 @@ export class ProductController {
   async create(@Payload() data: any): Promise<CustomResponse> {
     const createData = data.body;
     console.log(data.params);
-    createData.owner_id = data.params.user.id;
-
+    createData.owner_id = 'data.params.user.id';
     const response = await this.service.create(createData);
+    if (response.success) {
+      this.marketplaceClient.emit(
+        { module: 'product', action: 'createProduct' },
+        response.data,
+      );
+    }
     return response;
   }
 
@@ -38,6 +46,12 @@ export class ProductController {
     const param = data.params;
     const body = data.body;
     const response = await this.service.update(param.id, body);
+    if (response.success) {
+      this.marketplaceClient.emit(
+        { module: 'product', action: 'updateProduct' },
+        response.data,
+      );
+    }
     return response;
   }
 
@@ -46,6 +60,12 @@ export class ProductController {
   async delete(@Payload() data: any): Promise<CustomResponse> {
     const param = data.params;
     const response = await this.service.delete(param.id);
+    if (response.success) {
+      this.marketplaceClient.emit(
+        { module: 'product', action: 'deleteProduct' },
+        { id: response.data.id },
+      );
+    }
     return response;
   }
 }
