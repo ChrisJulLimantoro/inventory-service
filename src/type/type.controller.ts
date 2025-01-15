@@ -6,7 +6,10 @@ import { TypeService } from './type.service';
 
 @Controller('type')
 export class TypeController {
-  constructor(private readonly service: TypeService) {}
+  constructor(
+    private readonly service: TypeService,
+    @Inject('MARKETPLACE') private readonly marketplaceClient: ClientProxy,
+  ) {}
 
   @MessagePattern({ cmd: 'get:type' })
   @Describe('Get all type')
@@ -26,9 +29,15 @@ export class TypeController {
   async create(@Payload() data: any): Promise<CustomResponse> {
     const createData = data.body;
     console.log(data.params);
-    createData.owner_id = data.params.user.id;
+    createData.owner_id = 'data.params.user.id';
 
     const response = await this.service.create(createData);
+    if (response.success) {
+      this.marketplaceClient.emit(
+        { service: 'marketplace', module: 'type', action: 'create' },
+        response.data,
+      );
+    }
     return response;
   }
 
@@ -38,6 +47,12 @@ export class TypeController {
     const param = data.params;
     const body = data.body;
     const response = await this.service.update(param.id, body);
+    if (response.success) {
+      this.marketplaceClient.emit(
+        { service: 'marketplace', module: 'type', action: 'update' },
+        response.data,
+      );
+    }
     return response;
   }
 
@@ -46,6 +61,12 @@ export class TypeController {
   async delete(@Payload() data: any): Promise<CustomResponse> {
     const param = data.params;
     const response = await this.service.delete(param.id);
+    if (response.success) {
+      this.marketplaceClient.emit(
+        { service: 'marketplace', module: 'type', action: 'softdelete' },
+        { id: response.data.id },
+      );
+    }
     return response;
   }
 }
