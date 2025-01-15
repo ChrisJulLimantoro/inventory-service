@@ -6,7 +6,10 @@ import { CategoryService } from './category.service';
 
 @Controller('category')
 export class CategoryController {
-  constructor(private readonly service: CategoryService) {}
+  constructor(
+    private readonly service: CategoryService,
+    @Inject('MARKETPLACE') private readonly marketplaceClient: ClientProxy,
+  ) {}
 
   @MessagePattern({ cmd: 'get:category' })
   @Describe('Get all category')
@@ -29,6 +32,12 @@ export class CategoryController {
     createData.owner_id = data.params.user.id;
 
     const response = await this.service.create(createData);
+    if (response.success) {
+      this.marketplaceClient.emit(
+        { service: 'marketplace', module: 'category', action: 'create' },
+        response.data,
+      );
+    }
     return response;
   }
 
@@ -38,6 +47,12 @@ export class CategoryController {
     const param = data.params;
     const body = data.body;
     const response = await this.service.update(param.id, body);
+    if (response.success) {
+      this.marketplaceClient.emit(
+        { service: 'marketplace', module: 'category', action: 'update' },
+        response.data,
+      );
+    }
     return response;
   }
 
@@ -46,6 +61,12 @@ export class CategoryController {
   async delete(@Payload() data: any): Promise<CustomResponse> {
     const param = data.params;
     const response = await this.service.delete(param.id);
+    if (response.success) {
+      this.marketplaceClient.emit(
+        { service: 'marketplace', module: 'category', action: 'softdelete' },
+        { id: response.data.id },
+      );
+    }
     return response;
   }
 }
