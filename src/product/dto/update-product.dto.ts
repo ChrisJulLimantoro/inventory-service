@@ -1,10 +1,10 @@
 import { z } from 'zod';
 
 export class UpdateProductRequest {
-  name: string;
-  code: string;
+  name: string | null;
+  code: string | null;
   description: string | null;
-  price: number;
+  price: number | null;
 
   constructor({ name, code, description, price }) {
     this.name = name;
@@ -15,10 +15,10 @@ export class UpdateProductRequest {
 
   static schema() {
     return z.object({
-      name: z.string().min(3).max(255),
-      code: z.string().max(5),
+      name: z.string().min(3).max(255).nullable().optional(),
+      code: z.string().max(5).nullable().optional(),
       description: z.string().max(255).nullable().optional(),
-      price: z.number(),
+      price: z.number().nullable().optional(),
     });
   }
 }

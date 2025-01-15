@@ -19,6 +19,8 @@ model Category{
   name        String
   purity      String
   metal_type  Int // 0: Gold, 1: Silver, 2: Red Gold, 3: White Gold, 4: Platinum
+  weight_tray Decimal @db.Decimal
+  weight_paper Decimal @db.Decimal
   description String? @db.Text
   company_id  String @db.Uuid
 
@@ -29,6 +31,7 @@ model Category{
   updated_at DateTime @updatedAt
   deleted_at DateTime?
 
+  @@map("categories")
   @@index([deleted_at])
 }
 
@@ -41,11 +44,13 @@ model Type{
 
   category Category @relation(fields: [category_id], references: [id])
   products Product[]
+  prices prices[]
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
   deleted_at DateTime?
 
+  @@map("types")
   @@index([deleted_at])
 }
 
@@ -54,18 +59,51 @@ model Product{
   code        String
   name        String
   description String? @db.Text
-  price       Decimal @db.Decimal(65, 20)
-  is_active   Boolean @default(true)
+  fixed_price  Decimal @db.Decimal
+  status      Int // 0: Inactive, 1: Active, 2: Sold Out
   type_id     String @db.Uuid
   store_id    String @db.Uuid
 
   type Type @relation(fields: [type_id], references: [id])
   store Store @relation(fields: [store_id], references: [id])
+  product_codes Product_Code[]
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
   deleted_at DateTime?
 
+  @@map("products")
+  @@index([deleted_at])
+}
+
+model Product_Code {
+  id          String @id @db.Uuid @default(uuid())
+  barcode     String
+  product_id  String @db.Uuid
+
+  product Product @relation(fields: [product_id], references: [id])
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  deleted_at DateTime?
+
+  @@map("product_codes")
+  @@index([deleted_at])
+}
+
+model prices {
+  id         String @id @db.Uuid @default(uuid())
+  price      Decimal @db.Decimal
+  is_active  Boolean @default(true)
+  type_id    String @db.Uuid
+
+  type Type @relation(fields: [type_id], references: [id])
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  deleted_at DateTime?
+
+  @@map("prices")
   @@index([deleted_at])
 }
 
@@ -87,8 +125,8 @@ model Company {
 
 model Store {
   id      String         @id @db.Uuid @default(uuid())
-  code  String
-  name     String
+  code    String
+  name    String
   company_id String @db.Uuid
 
   company Company @relation(fields: [company_id], references: [id])

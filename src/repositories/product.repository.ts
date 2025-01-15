@@ -8,6 +8,7 @@ export class ProductRepository extends BaseRepository<any> {
     const relations = {
       stores: true,
       type: true,
+      product_codes: true,
     };
     super(prisma, 'product', relations, true); // 'role' is the Prisma model name
   }

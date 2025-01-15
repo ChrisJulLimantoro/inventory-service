@@ -3,12 +3,11 @@ import { Injectable } from '@nestjs/common';
 import { BaseRepository } from 'src/repositories/base.repository';
 
 @Injectable()
-export class TypeRepository extends BaseRepository<any> {
+export class PriceRepository extends BaseRepository<any> {
   constructor(prisma: PrismaService) {
     const relations = {
-      products: true,
-      prices: true,
+      type: true,
     };
-    super(prisma, 'type', relations, true); // 'role' is the Prisma model name
+    super(prisma, 'price', relations, true); // 'role' is the Prisma model name
   }
 }

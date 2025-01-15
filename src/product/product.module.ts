@@ -4,10 +4,16 @@ import { ProductService } from './product.service';
 import { ProductRepository } from 'src/repositories/product.repository';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { SharedModule } from 'src/shared.module';
+import { ProductCodeRepository } from 'src/repositories/product-code.repository';
 
 @Module({
   imports: [SharedModule],
   controllers: [ProductController],
-  providers: [ProductService, ProductRepository, PrismaService],
+  providers: [
+    ProductService,
+    ProductRepository,
+    ProductCodeRepository,
+    PrismaService,
+  ],
 })
 export class ProductModule {}

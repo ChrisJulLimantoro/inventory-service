@@ -1,8 +1,8 @@
 import { z } from 'zod';
 
 export class UpdateTypeRequest {
-  name: string;
-  code: string;
+  name: string | null;
+  code: string | null;
   description: string | null;
 
   constructor({ name, code, description }) {
@@ -13,8 +13,8 @@ export class UpdateTypeRequest {
 
   static schema() {
     return z.object({
-      name: z.string().min(3).max(255),
-      code: z.string().max(5),
+      name: z.string().min(3).max(255).nullable().optional(),
+      code: z.string().max(5).nullable().optional(),
       description: z.string().max(255).nullable().optional(),
     });
   }

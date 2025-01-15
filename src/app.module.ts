@@ -7,9 +7,10 @@ import { MessagePatternDiscoveryService } from './discovery/message-pattern-disc
 import { CategoryModule } from './category/category.module';
 import { TypeModule } from './type/type.module';
 import { ProductModule } from './product/product.module';
+import { PriceModule } from './price/price.module';
 
 @Module({
-  imports: [DiscoveryModule, ValidationModule.forRoot(), PrismaModule, CategoryModule, TypeModule, ProductModule],
+  imports: [DiscoveryModule, ValidationModule.forRoot(), PrismaModule, CategoryModule, TypeModule, ProductModule, PriceModule],
   controllers: [AppController],
   providers: [MessagePatternDiscoveryService],
 })

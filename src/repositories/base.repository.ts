@@ -47,6 +47,7 @@ export class BaseRepository<T> {
 
   // Update a record with possible relations
   async update(id: string, data: any): Promise<T> {
+    data.updated_at = new Date();
     return this.prisma[this.modelName].update({
       where: this.isSoftDelete ? { id, deleted_at: null } : { id },
       data,
@@ -59,7 +60,7 @@ export class BaseRepository<T> {
     if (this.isSoftDelete) {
       return this.prisma[this.modelName].update({
         where: { id },
-        data: { deleted_at: new Date() },
+        data: { deleted_at: new Date(), updated_at: new Date() },
       });
     }
     return this.prisma[this.modelName].delete({
@@ -71,7 +72,14 @@ export class BaseRepository<T> {
   async restore(id: string): Promise<T> {
     return this.prisma[this.modelName].update({
       where: { id },
-      data: { deleted_at: null },
+      data: { deleted_at: null, updated_at: new Date() },
+    });
+  }
+
+  // function for count
+  async count(filter?: Record<string, any>): Promise<number> {
+    return this.prisma[this.modelName].count({
+      where: filter,
     });
   }
 }
