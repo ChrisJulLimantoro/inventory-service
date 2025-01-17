@@ -5,6 +5,7 @@ import { ValidationService } from 'src/validation/validation.service';
 import { CreateProductRequest } from './dto/create-product.dto';
 import { UpdateProductRequest } from './dto/update-product.dto';
 import { ProductCodeRepository } from 'src/repositories/product-code.repository';
+import { CustomResponse } from 'src/exception/dto/custom-response.dto';
 
 @Injectable()
 export class ProductService extends BaseService {
@@ -41,6 +42,6 @@ export class ProductService extends BaseService {
       product_id: product_id,
       barcode: barcode,
     });
-    return code;
+    return CustomResponse.success('Product code generated!', code, 201);
   }
 }

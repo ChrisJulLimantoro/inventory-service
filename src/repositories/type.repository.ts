@@ -6,8 +6,17 @@ import { BaseRepository } from 'src/repositories/base.repository';
 export class TypeRepository extends BaseRepository<any> {
   constructor(prisma: PrismaService) {
     const relations = {
-      products: true,
-      prices: true,
+      products: {
+        where: {
+          deleted_at: null,
+        },
+      },
+      prices: {
+        where: {
+          deleted_at: null,
+        },
+      },
+      category: true,
     };
     super(prisma, 'type', relations, true); // 'role' is the Prisma model name
   }

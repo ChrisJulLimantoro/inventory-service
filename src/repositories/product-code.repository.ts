@@ -8,6 +8,6 @@ export class ProductCodeRepository extends BaseRepository<any> {
     const relations = {
       product: true,
     };
-    super(prisma, 'product_code', relations, true); // 'role' is the Prisma model name
+    super(prisma, 'productCode', relations, true); // 'role' is the Prisma model name
   }
 }

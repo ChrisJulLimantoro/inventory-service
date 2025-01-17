@@ -8,9 +8,21 @@ import { CategoryModule } from './category/category.module';
 import { TypeModule } from './type/type.module';
 import { ProductModule } from './product/product.module';
 import { PriceModule } from './price/price.module';
+import { CompanyModule } from './company/company.module';
+import { StoreModule } from './store/store.module';
 
 @Module({
-  imports: [DiscoveryModule, ValidationModule.forRoot(), PrismaModule, CategoryModule, TypeModule, ProductModule, PriceModule],
+  imports: [
+    DiscoveryModule,
+    ValidationModule.forRoot(),
+    PrismaModule,
+    CategoryModule,
+    TypeModule,
+    ProductModule,
+    PriceModule,
+    CompanyModule,
+    StoreModule,
+  ],
   controllers: [AppController],
   providers: [MessagePatternDiscoveryService],
 })

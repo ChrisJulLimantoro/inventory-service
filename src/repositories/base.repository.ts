@@ -15,7 +15,6 @@ export class BaseRepository<T> {
   async create(data: any): Promise<T> {
     return this.prisma[this.modelName].create({
       data,
-      include: this.relations,
     });
   }
 
@@ -51,7 +50,6 @@ export class BaseRepository<T> {
     return this.prisma[this.modelName].update({
       where: this.isSoftDelete ? { id, deleted_at: null } : { id },
       data,
-      include: this.relations,
     });
   }
 
@@ -78,6 +76,7 @@ export class BaseRepository<T> {
 
   // function for count
   async count(filter?: Record<string, any>): Promise<number> {
+    console.log(this.modelName, filter);
     return this.prisma[this.modelName].count({
       where: filter,
     });
