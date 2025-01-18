@@ -13,7 +13,7 @@ export class CreateProductRequest {
     this.name = name;
     this.code = code;
     this.description = description;
-    this.fixed_price = fixed_price;
+    this.fixed_price = parseFloat(fixed_price);
     this.type_id = type_id;
     this.store_id = store_id;
     this.status = 1;
@@ -24,7 +24,7 @@ export class CreateProductRequest {
       name: z.string().min(3).max(255),
       code: z.string().max(8),
       description: z.string().max(255).nullable().optional(),
-      fixed_price: z.number(),
+      fixed_price: z.number().nonnegative(),
       type_id: z.string().uuid(),
       store_id: z.string().uuid(),
       status: z.number().optional(),

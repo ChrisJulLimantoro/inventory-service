@@ -9,6 +9,7 @@ export class PriceController {
   constructor(
     private readonly service: PriceService,
     @Inject('MARKETPLACE') private readonly marketplaceClient: ClientProxy,
+    @Inject('TRANSACTION') private readonly transactionClient: ClientProxy,
   ) {}
 
   @MessagePattern({ cmd: 'get:price' })
@@ -37,6 +38,7 @@ export class PriceController {
         { service: 'marketplace', module: 'price', action: 'create' },
         response.data,
       );
+      this.transactionClient.emit({ cmd: 'price_created' }, response.data);
     }
     return response;
   }
@@ -52,6 +54,7 @@ export class PriceController {
         { service: 'marketplace', module: 'price', action: 'update' },
         response.data,
       );
+      this.transactionClient.emit({ cmd: 'price_updated' }, response.data);
     }
     return response;
   }
@@ -66,6 +69,7 @@ export class PriceController {
         { service: 'marketplace', module: 'price', action: 'softdelete' },
         { id: response.data.id },
       );
+      this.transactionClient.emit({ cmd: 'price_deleted' }, response.data.id);
     }
     return response;
   }

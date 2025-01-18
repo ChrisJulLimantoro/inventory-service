@@ -81,6 +81,8 @@ model ProductCode {
   id          String @id @db.Uuid @default(uuid())
   barcode     String
   product_id  String @db.Uuid
+  status      Int @default(0) // 0: Available 1: Sold Out 2: Taken
+
 
   product Product @relation(fields: [product_id], references: [id])
 

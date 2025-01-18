@@ -9,6 +9,7 @@ export class TypeController {
   constructor(
     private readonly service: TypeService,
     @Inject('MARKETPLACE') private readonly marketplaceClient: ClientProxy,
+    @Inject('TRANSACTION') private readonly transactionClient: ClientProxy,
   ) {}
 
   @MessagePattern({ cmd: 'get:type' })
@@ -37,6 +38,7 @@ export class TypeController {
         { service: 'marketplace', module: 'type', action: 'create' },
         response.data,
       );
+      this.transactionClient.emit({ cmd: 'type_created' }, response.data);
     }
     return response;
   }
@@ -52,6 +54,7 @@ export class TypeController {
         { service: 'marketplace', module: 'type', action: 'update' },
         response.data,
       );
+      this.transactionClient.emit({ cmd: 'type_updated' }, response.data);
     }
     return response;
   }
@@ -66,6 +69,7 @@ export class TypeController {
         { service: 'marketplace', module: 'type', action: 'softdelete' },
         { id: response.data.id },
       );
+      this.transactionClient.emit({ cmd: 'type_deleted' }, response.data.id);
     }
     return response;
   }

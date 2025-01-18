@@ -9,6 +9,7 @@ export class CategoryController {
   constructor(
     private readonly service: CategoryService,
     @Inject('MARKETPLACE') private readonly marketplaceClient: ClientProxy,
+    @Inject('TRANSACTION') private readonly transactionClient: ClientProxy,
   ) {}
 
   @MessagePattern({ cmd: 'get:category' })
@@ -37,6 +38,7 @@ export class CategoryController {
         { service: 'marketplace', module: 'category', action: 'create' },
         response.data,
       );
+      this.transactionClient.emit({ cmd: 'category_created' }, response.data);
     }
     return response;
   }
@@ -52,6 +54,7 @@ export class CategoryController {
         { service: 'marketplace', module: 'category', action: 'update' },
         response.data,
       );
+      this.transactionClient.emit({ cmd: 'category_updated' }, response.data);
     }
     return response;
   }
@@ -65,6 +68,10 @@ export class CategoryController {
       this.marketplaceClient.emit(
         { service: 'marketplace', module: 'category', action: 'softdelete' },
         { id: response.data.id },
+      );
+      this.transactionClient.emit(
+        { cmd: 'category_deleted' },
+        response.data.id,
       );
     }
     return response;

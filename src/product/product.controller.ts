@@ -9,6 +9,7 @@ export class ProductController {
   constructor(
     private readonly service: ProductService,
     @Inject('MARKETPLACE') private readonly marketplaceClient: ClientProxy,
+    @Inject('TRANSACTION') private readonly transactionClient: ClientProxy,
   ) {}
 
   @MessagePattern({ cmd: 'get:product' })
@@ -36,6 +37,7 @@ export class ProductController {
         { module: 'product', action: 'createProduct' },
         response.data,
       );
+      this.transactionClient.emit({ cmd: 'product_created' }, response.data);
     }
     return response;
   }
@@ -51,6 +53,7 @@ export class ProductController {
         { module: 'product', action: 'updateProduct' },
         response.data,
       );
+      this.transactionClient.emit({ cmd: 'product_updated' }, response.data);
     }
     return response;
   }
@@ -65,6 +68,7 @@ export class ProductController {
         { module: 'product', action: 'deleteProduct' },
         { id: response.data.id },
       );
+      this.transactionClient.emit({ cmd: 'product_deleted' }, response.data.id);
     }
     return response;
   }
@@ -77,6 +81,10 @@ export class ProductController {
     if (response.success) {
       this.marketplaceClient.emit(
         { module: 'product', action: 'generateProductCode' },
+        response.data,
+      );
+      this.transactionClient.emit(
+        { cmd: 'product_code_generated' },
         response.data,
       );
     }
