@@ -130,6 +130,9 @@ model Store {
   id      String         @id @db.Uuid @default(uuid())
   code    String
   name    String
+  is_active Boolean @default(true)
+  is_flex_price Boolean @default(false)
+  is_float_price Boolean @default(false)
   company_id String @db.Uuid
 
   company Company @relation(fields: [company_id], references: [id])
