@@ -77,7 +77,8 @@ export class ProductController {
   @Describe('Generate product code')
   async generateProductCode(@Payload() data: any): Promise<CustomResponse> {
     const param = data.params;
-    const response = await this.service.generateProductCode(param.id);
+    const body = data.body;
+    const response = await this.service.generateProductCode(param.id, body);
     if (response.success) {
       this.marketplaceClient.emit(
         { module: 'product', action: 'generateProductCode' },

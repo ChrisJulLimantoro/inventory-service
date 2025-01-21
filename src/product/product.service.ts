@@ -29,7 +29,7 @@ export class ProductService extends BaseService {
     return new UpdateProductRequest(data);
   }
 
-  async generateProductCode(product_id: any) {
+  async generateProductCode(product_id: any, data: any) {
     const product = await this.productRepository.findOne(product_id);
     if (!product) {
       throw new Error('Product not found');
@@ -41,6 +41,7 @@ export class ProductService extends BaseService {
     const code = await this.productCodeRepository.create({
       product_id: product_id,
       barcode: barcode,
+      weight: data.weight,
     });
     return CustomResponse.success('Product code generated!', code, 201);
   }
