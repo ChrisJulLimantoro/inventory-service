@@ -137,6 +137,7 @@ model Store {
 
   company Company @relation(fields: [company_id], references: [id])
   products Product[]
+  opeartions Operation[]
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
@@ -145,4 +146,23 @@ model Store {
   @@map("stores")
   @@index([deleted_at])
   @@index([company_id])
+}
+
+model Operation {
+  id          String @id @db.Uuid @default(uuid())
+  code        String
+  name        String
+  price       Decimal @db.Decimal
+  uom         String
+  description String? @db.Text
+  store_id  String @db.Uuid
+
+  store Store @relation(fields: [store_id], references: [id])
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  deleted_at DateTime?
+
+  @@map("operations")
+  @@index([deleted_at])
 }

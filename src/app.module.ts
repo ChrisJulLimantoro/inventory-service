@@ -10,6 +10,7 @@ import { ProductModule } from './product/product.module';
 import { PriceModule } from './price/price.module';
 import { CompanyModule } from './company/company.module';
 import { StoreModule } from './store/store.module';
+import { OperationModule } from './operation/operation.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { StoreModule } from './store/store.module';
     PriceModule,
     CompanyModule,
     StoreModule,
+    OperationModule,
   ],
   controllers: [AppController],
   providers: [MessagePatternDiscoveryService],
