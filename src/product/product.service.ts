@@ -6,6 +6,7 @@ import { CreateProductRequest } from './dto/create-product.dto';
 import { UpdateProductRequest } from './dto/update-product.dto';
 import { ProductCodeRepository } from 'src/repositories/product-code.repository';
 import { CustomResponse } from 'src/exception/dto/custom-response.dto';
+import { CreateProductCodeDto } from './dto/create-productCode.dto';
 
 @Injectable()
 export class ProductService extends BaseService {
@@ -38,11 +39,12 @@ export class ProductService extends BaseService {
       product_id: product_id,
     });
     const barcode = `${product.code}${(count_codes + 1).toString().padStart(4, '0')}`; // logic for barcode
-    const code = await this.productCodeRepository.create({
-      product_id: product_id,
-      barcode: barcode,
-      weight: data.weight,
-    });
+    data = { ...data, barcode: barcode, product_id: product_id };
+    const validated = this.validation.validate(
+      data,
+      CreateProductCodeDto.schema(),
+    );
+    const code = await this.productCodeRepository.create(validated);
     return CustomResponse.success('Product code generated!', code, 201);
   }
 }
