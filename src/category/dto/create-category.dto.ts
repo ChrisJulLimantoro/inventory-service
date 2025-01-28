@@ -24,8 +24,8 @@ export class CreateCategoryRequest {
     this.code = code;
     this.purity = purity;
     this.metal_type = metal_type;
-    this.weight_tray = weight_tray;
-    this.weight_paper = weight_paper;
+    this.weight_tray = parseFloat(weight_tray);
+    this.weight_paper = parseFloat(weight_paper);
     this.description = description;
     this.company_id = company_id;
   }
@@ -33,7 +33,7 @@ export class CreateCategoryRequest {
   static schema() {
     return z.object({
       name: z.string().min(3).max(255),
-      code: z.string().max(5),
+      code: z.string().max(10),
       purity: z.string().min(1).max(255),
       metal_type: z.number(),
       weight_tray: z.number().positive(),
