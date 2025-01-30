@@ -16,7 +16,7 @@ export class CreateTypeRequest {
   static schema() {
     return z.object({
       name: z.string().min(3).max(255),
-      code: z.string().max(5),
+      code: z.string().max(15),
       description: z.string().max(255).nullable().optional(),
       category_id: z.string().uuid(),
     });

@@ -73,4 +73,23 @@ export class TypeController {
     }
     return response;
   }
+
+  @MessagePattern({ cmd: 'post:bulk-type' })
+  @Describe('Create bulk type')
+  async createBulk(@Payload() data: any): Promise<CustomResponse> {
+    const createData = data.body;
+    createData.owner_id = data.params.user.id;
+
+    const response = await this.service.createBulk(createData);
+    if (response.success) {
+      response.data.forEach((item) => {
+        this.marketplaceClient.emit(
+          { service: 'marketplace', module: 'type', action: 'create' },
+          item,
+        );
+        this.transactionClient.emit({ cmd: 'type_created' }, item);
+      });
+    }
+    return response;
+  }
 }
