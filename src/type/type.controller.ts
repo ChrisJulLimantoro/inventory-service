@@ -80,7 +80,7 @@ export class TypeController {
     const createData = data.body;
     createData.owner_id = data.params.user.id;
 
-    const response = await this.service.createBulk(createData);
+    const response = await this.service.bulkCreate(createData);
     if (response.success) {
       response.data.forEach((item) => {
         this.marketplaceClient.emit(

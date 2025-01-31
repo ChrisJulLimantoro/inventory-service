@@ -26,46 +26,4 @@ export class TypeService extends BaseService {
   protected transformUpdateData(data: any) {
     return new UpdateTypeRequest(data);
   }
-
-  async createBulk(data: Record<string, any>) {
-    // Store valid data and errors separately
-    const errors: { index: string; error: string }[] = [];
-    const entries = Object.entries(data);
-    console.log(entries);
-
-    // Validate all data before insertion
-    const validatedData = entries
-      .map(([key, item]) => {
-        console.log(item);
-        try {
-          return this.validation.validate(item, this.createSchema);
-        } catch (error) {
-          errors.push({
-            index: key,
-            error: error.message || 'Validation failed',
-          });
-          return null; // Skip invalid items
-        }
-      })
-      .filter((item) => item !== null); // Remove `null` (invalid entries)
-
-    if (validatedData.length === 0) {
-      return CustomResponse.error('No valid data to insert.', errors, 400);
-    }
-
-    try {
-      // Perform bulk insert in parallel
-      const createdData = await Promise.all(
-        validatedData.map((item) => this.repository.create(item)),
-      );
-
-      return CustomResponse.success(
-        `New ${createdData.length} Data Created!`,
-        createdData,
-        201,
-      );
-    } catch (error) {
-      return CustomResponse.error('Failed to insert data.', error, 500);
-    }
-  }
 }

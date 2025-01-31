@@ -6,7 +6,7 @@ export class CreatePriceRequest {
   date: Date;
 
   constructor({ price, type_id, date }) {
-    this.price = price;
+    this.price = parseFloat(price);
     this.type_id = type_id;
     this.date = new Date(date);
   }

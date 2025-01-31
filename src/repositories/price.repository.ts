@@ -10,4 +10,33 @@ export class PriceRepository extends BaseRepository<any> {
     };
     super(prisma, 'price', relations, true); // 'role' is the Prisma model name
   }
+
+  async bulkDelete(category_id: string, date: string) {
+    const recordsToDelete = await this.prisma.price.findMany({
+      where: {
+        type: {
+          category_id: category_id,
+        },
+        date: new Date(date), // Ensure correct format
+      },
+    });
+
+    if (recordsToDelete.length === 0) {
+      return { message: 'No records found to delete', deleted: [] };
+    }
+
+    await this.prisma.price.deleteMany({
+      where: {
+        type: {
+          category_id: category_id,
+        },
+        date: new Date(date),
+      },
+    });
+
+    return {
+      message: `${recordsToDelete.length} Records deleted successfully`,
+      deleted: recordsToDelete,
+    };
+  }
 }

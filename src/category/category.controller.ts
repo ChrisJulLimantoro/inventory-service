@@ -76,4 +76,17 @@ export class CategoryController {
     }
     return response;
   }
+
+  @MessagePattern({ cmd: 'get:price-category' })
+  @Describe('Get all category price')
+  async findAllPriceCategory(): Promise<CustomResponse> {
+    return this.service.findAllPriceCategory();
+  }
+
+  @MessagePattern({ cmd: 'get:price-category-detail' })
+  @Describe('Get price detail by category')
+  async findPriceCategoryDetail(@Payload() data: any): Promise<CustomResponse> {
+    const body = data.body;
+    return this.service.findPriceCategoryDetail(body);
+  }
 }

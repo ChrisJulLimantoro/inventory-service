@@ -20,6 +20,7 @@ async function bootstrap() {
         urls: ['amqp://localhost:5672'],
         queue: 'inventory_service_queue',
         noAck: false,
+        queueOptions: { durable: true },
       },
     });
 
