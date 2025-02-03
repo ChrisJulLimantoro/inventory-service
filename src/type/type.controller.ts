@@ -14,8 +14,8 @@ export class TypeController {
 
   @MessagePattern({ cmd: 'get:type' })
   @Describe('Get all type')
-  async findAll(): Promise<CustomResponse> {
-    return this.service.findAll();
+  async findAll(@Payload() data: any): Promise<CustomResponse> {
+    return this.service.findAll(data.body);
   }
 
   @MessagePattern({ cmd: 'get:type/*' })

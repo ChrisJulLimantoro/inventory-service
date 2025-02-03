@@ -22,7 +22,7 @@ export class CreateProductRequest {
   static schema() {
     return z.object({
       name: z.string().min(3).max(255),
-      code: z.string().max(8),
+      code: z.string().max(25),
       description: z.string().max(255).nullable().optional(),
       images: z.array(z.string()).optional(),
       type_id: z.string().uuid(),

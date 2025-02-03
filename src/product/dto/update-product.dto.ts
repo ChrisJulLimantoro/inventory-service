@@ -16,7 +16,7 @@ export class UpdateProductRequest {
   static schema() {
     return z.object({
       name: z.string().min(3).max(255).nullable().optional(),
-      code: z.string().max(8).nullable().optional(),
+      code: z.string().max(25).nullable().optional(),
       description: z.string().max(255).nullable().optional(),
       images: z.array(z.string()).nullable().optional(),
     });

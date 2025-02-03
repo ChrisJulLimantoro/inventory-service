@@ -73,6 +73,13 @@ export class ProductController {
     return response;
   }
 
+  @MessagePattern({ cmd: 'get:product-codes/*' })
+  @Describe('Get product code')
+  async getProductCodes(@Payload() data: any): Promise<CustomResponse> {
+    const param = data.params;
+    return this.service.getProductCodes(param.id);
+  }
+
   @MessagePattern({ cmd: 'post:generate-product-code/*' })
   @Describe('Generate product code')
   async generateProductCode(@Payload() data: any): Promise<CustomResponse> {
@@ -90,5 +97,12 @@ export class ProductController {
       );
     }
     return response;
+  }
+
+  @MessagePattern({ cmd: 'delete:product-code/*' })
+  @Describe('Delete product code')
+  async deleteProductCode(@Payload() data: any): Promise<CustomResponse> {
+    const param = data.params;
+    return this.service.deleteProductCode(param.id);
   }
 }

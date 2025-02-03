@@ -29,8 +29,12 @@ export abstract class BaseService {
   }
 
   // Find all
-  async findAll(filter: Record<string, any> = null): Promise<CustomResponse> {
-    const data = await this.repository.findAll(filter);
+  async findAll(
+    filter: Record<string, any> = {},
+    order_by: Record<string, any> = {},
+  ): Promise<CustomResponse> {
+    filter = this.parseBooleanValues(filter);
+    const data = await this.repository.findAll(filter, order_by);
     return CustomResponse.success('Data Found!', data, 200);
   }
 
@@ -105,4 +109,20 @@ export abstract class BaseService {
       return CustomResponse.error('Failed to insert data.', error, 500);
     }
   }
+
+  parseBooleanValues = (filter: Record<string, any>) => {
+    const parsedFilter: Record<string, any> = {};
+
+    Object.keys(filter).forEach((key) => {
+      if (filter[key] === 'true') {
+        parsedFilter[key] = true;
+      } else if (filter[key] === 'false') {
+        parsedFilter[key] = false;
+      } else {
+        parsedFilter[key] = filter[key]; // Keep other values unchanged
+      }
+    });
+
+    return parsedFilter;
+  };
 }

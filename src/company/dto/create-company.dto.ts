@@ -5,7 +5,7 @@ export class CreateCompanyRequest {
   name: string;
   code: string;
 
-  constructor({ id, name, code }) {
+  constructor({ id, name, code, owner_id }) {
     this.id = id;
     this.name = name;
     this.code = code;

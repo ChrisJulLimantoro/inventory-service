@@ -14,8 +14,9 @@ export class PriceController {
 
   @MessagePattern({ cmd: 'get:price' })
   @Describe('Get all price')
-  async findAll(): Promise<CustomResponse> {
-    return this.service.findAll();
+  async findAll(@Payload() data: any): Promise<CustomResponse> {
+    const { filter, order_by } = data.body;
+    return this.service.findAll(filter, order_by);
   }
 
   @MessagePattern({ cmd: 'get:price/*' })

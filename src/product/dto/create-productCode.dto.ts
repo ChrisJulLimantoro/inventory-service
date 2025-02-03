@@ -17,8 +17,7 @@ export class CreateProductCodeDto {
 
   static schema() {
     return z.object({
-      id: z.string().uuid(),
-      barcode: z.string().max(5),
+      barcode: z.string().max(25),
       product_id: z.string().uuid(),
       status: z.number().optional(),
       weight: z.number(),

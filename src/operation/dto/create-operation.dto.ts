@@ -20,9 +20,9 @@ export class CreateOperationRequest {
   static schema() {
     return z.object({
       name: z.string().min(3).max(255),
-      code: z.string().max(5),
+      code: z.string().max(15),
       price: z.number().nonnegative(),
-      uom: z.string().max(5),
+      uom: z.string().max(15),
       description: z.string().max(255).nullable().optional(),
       store_id: z.string().uuid(),
     });
