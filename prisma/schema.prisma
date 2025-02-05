@@ -134,6 +134,7 @@ model Store {
   is_active Boolean @default(true)
   is_flex_price Boolean @default(false)
   is_float_price Boolean @default(false)
+  tax_percentage Decimal @db.Decimal @default(11)
   company_id String @db.Uuid
 
   company Company @relation(fields: [company_id], references: [id])
