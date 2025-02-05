@@ -74,7 +74,7 @@ export class ProductController {
   }
 
   @MessagePattern({ cmd: 'get:product-codes/*' })
-  @Describe('Get product code')
+  @Describe('Get product code by product_id')
   async getProductCodes(@Payload() data: any): Promise<CustomResponse> {
     const param = data.params;
     return this.service.getProductCodes(param.id);
@@ -104,5 +104,13 @@ export class ProductController {
   async deleteProductCode(@Payload() data: any): Promise<CustomResponse> {
     const param = data.params;
     return this.service.deleteProductCode(param.id);
+  }
+
+  @MessagePattern({ cmd: 'get:product-barcode/*' })
+  @Describe('Get product code by barcode')
+  async getProductCode(@Payload() data: any): Promise<CustomResponse> {
+    const param = data.params;
+    const body = data.body;
+    return this.service.getProductCode(param.id, body.store);
   }
 }

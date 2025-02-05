@@ -7,6 +7,7 @@ import { UpdateProductRequest } from './dto/update-product.dto';
 import { ProductCodeRepository } from 'src/repositories/product-code.repository';
 import { CustomResponse } from 'src/exception/dto/custom-response.dto';
 import { CreateProductCodeDto } from './dto/create-productCode.dto';
+import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class ProductService extends BaseService {
@@ -18,6 +19,7 @@ export class ProductService extends BaseService {
     private readonly productRepository: ProductRepository,
     private readonly productCodeRepository: ProductCodeRepository,
     protected readonly validation: ValidationService,
+    protected readonly prisma: PrismaService,
   ) {
     super(validation);
   }
@@ -78,5 +80,39 @@ export class ProductService extends BaseService {
     }
     await this.productCodeRepository.delete(id);
     return CustomResponse.success('Product code deleted!', null, 200);
+  }
+
+  async getProductCode(barcode: string, store_id: string) {
+    const code = await this.productCodeRepository.getProductCode(barcode);
+    const store = await this.prisma.store.findUnique({
+      where: {
+        id: store_id,
+        deleted_at: null,
+        is_active: true,
+      },
+      select: {
+        id: true,
+        is_active: true,
+        is_flex_price: true,
+        is_float_price: true,
+      },
+    });
+    if (!code) {
+      throw new Error('Product code not found');
+    }
+    if (!store) {
+      throw new Error('Store not found');
+    }
+    const data = {
+      id: code.id,
+      barcode: code.barcode,
+      name: `${code.barcode} - ${code.product.name}`,
+      price: store.is_float_price
+        ? code.product.type.prices[0].price
+        : code.fixed_price,
+      weight: code.weight,
+      type: `${code.product.type.code} - ${code.product.type.category.name}`,
+    };
+    return CustomResponse.success('Product code retrieved!', data, 200);
   }
 }
