@@ -9,6 +9,7 @@ export class OperationController {
   constructor(
     private readonly service: OperationService,
     @Inject('TRANSACTION') private readonly transactionClient: ClientProxy,
+    @Inject('MARKETPLACE') private readonly marketplaceClient: ClientProxy,
   ) {}
 
   @MessagePattern({ cmd: 'get:operation' })
@@ -34,6 +35,7 @@ export class OperationController {
     const response = await this.service.create(createData);
     if (response.success) {
       this.transactionClient.emit({ cmd: 'operation_created' }, response.data);
+      this.marketplaceClient.emit({ cmd: 'operation_created' }, response.data);
     }
     return response;
   }
@@ -46,6 +48,7 @@ export class OperationController {
     const response = await this.service.update(param.id, body);
     if (response.success) {
       this.transactionClient.emit({ cmd: 'operation_updated' }, response.data);
+      this.marketplaceClient.emit({ cmd: 'operation_updated' }, response.data);
     }
     return response;
   }
@@ -57,6 +60,10 @@ export class OperationController {
     const response = await this.service.delete(param.id);
     if (response.success) {
       this.transactionClient.emit(
+        { cmd: 'operation_deleted' },
+        response.data.id,
+      );
+      this.marketplaceClient.emit(
         { cmd: 'operation_deleted' },
         response.data.id,
       );
