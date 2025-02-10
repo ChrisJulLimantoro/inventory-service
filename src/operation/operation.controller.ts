@@ -12,20 +12,34 @@ export class OperationController {
   ) {}
 
   @MessagePattern({ cmd: 'get:operation' })
-  @Describe('Get all operation')
+  @Describe({
+    description: 'Get all operation',
+    fe: [
+      'inventory/operation:open',
+      'transaction/sales:add',
+      'transaction/sales:edit',
+      'transaction/sales:detail',
+    ],
+  })
   async findAll(): Promise<CustomResponse> {
     return this.service.findAll();
   }
 
   @MessagePattern({ cmd: 'get:operation/*' })
-  @Describe('Get a operation by id')
+  @Describe({
+    description: 'Get a operation by id',
+    fe: ['inventory/operation:edit', 'inventory/operation:detail'],
+  })
   async findOne(@Payload() data: any): Promise<CustomResponse | null> {
     const param = data.params;
     return this.service.findOne(param.id);
   }
 
   @MessagePattern({ cmd: 'post:operation' })
-  @Describe('Create a new operation')
+  @Describe({
+    description: 'Create a new operation',
+    fe: ['inventory/operation:add'],
+  })
   async create(@Payload() data: any): Promise<CustomResponse> {
     const createData = data.body;
     console.log(data.params);
@@ -39,7 +53,10 @@ export class OperationController {
   }
 
   @MessagePattern({ cmd: 'put:operation/*' })
-  @Describe('Modify operation')
+  @Describe({
+    description: 'Modify operation',
+    fe: ['inventory/operation:edit'],
+  })
   async update(@Payload() data: any): Promise<CustomResponse> {
     const param = data.params;
     const body = data.body;
@@ -51,7 +68,10 @@ export class OperationController {
   }
 
   @MessagePattern({ cmd: 'delete:operation/*' })
-  @Describe('Delete operation')
+  @Describe({
+    description: 'Delete operation',
+    fe: ['inventory/operation:delete'],
+  })
   async delete(@Payload() data: any): Promise<CustomResponse> {
     const param = data.params;
     const response = await this.service.delete(param.id);

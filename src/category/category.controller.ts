@@ -13,20 +13,46 @@ export class CategoryController {
   ) {}
 
   @MessagePattern({ cmd: 'get:category' })
-  @Describe('Get all category')
+  @Describe({
+    description: 'Get all category',
+    fe: [
+      'master/category:open',
+      'master/price:add',
+      'master/price:detail',
+      'inventory/product:add',
+      'inventory/product:edit',
+      'inventory/product:detail',
+    ],
+  })
   async findAll(@Payload() data: any): Promise<CustomResponse> {
-    return this.service.findAll(data.body);
+    // Filter by owner id because it is an master data determined by the owner
+    const filter = {
+      owner_id: data.body.owner_id,
+      company_id: data.body.company_id,
+    };
+    return this.service.findAll(filter);
   }
 
   @MessagePattern({ cmd: 'get:category/*' })
-  @Describe('Get a category by id')
+  @Describe({
+    description: 'Get a category by id',
+    fe: [
+      'master/category:detail',
+      'master/category:edit',
+      'master/price:add',
+      'master/price:detail',
+    ],
+  })
   async findOne(@Payload() data: any): Promise<CustomResponse | null> {
     const param = data.params;
     return this.service.findOne(param.id);
   }
 
   @MessagePattern({ cmd: 'post:category' })
-  @Describe('Create a new category')
+  @Describe({
+    description: 'Create a new category',
+    fe: ['master/category:add'],
+  })
   async create(@Payload() data: any): Promise<CustomResponse> {
     const createData = data.body;
     console.log(data.params);
@@ -44,7 +70,7 @@ export class CategoryController {
   }
 
   @MessagePattern({ cmd: 'put:category/*' })
-  @Describe('Modify category')
+  @Describe({ description: 'Modify category', fe: ['master/category:edit'] })
   async update(@Payload() data: any): Promise<CustomResponse> {
     const param = data.params;
     const body = data.body;
@@ -60,7 +86,7 @@ export class CategoryController {
   }
 
   @MessagePattern({ cmd: 'delete:category/*' })
-  @Describe('Delete category')
+  @Describe({ description: 'Delete category', fe: ['master/category:delete'] })
   async delete(@Payload() data: any): Promise<CustomResponse> {
     const param = data.params;
     const response = await this.service.delete(param.id);
@@ -78,13 +104,19 @@ export class CategoryController {
   }
 
   @MessagePattern({ cmd: 'get:price-category' })
-  @Describe('Get all category price')
+  @Describe({
+    description: 'Get all category price',
+    fe: ['master/price:open'],
+  })
   async findAllPriceCategory(): Promise<CustomResponse> {
     return this.service.findAllPriceCategory();
   }
 
   @MessagePattern({ cmd: 'get:price-category-detail' })
-  @Describe('Get price detail by category')
+  @Describe({
+    description: 'Get price detail by category',
+    fe: ['master/price:detail'],
+  })
   async findPriceCategoryDetail(@Payload() data: any): Promise<CustomResponse> {
     const body = data.body;
     return this.service.findPriceCategoryDetail(body);

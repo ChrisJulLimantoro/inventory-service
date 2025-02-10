@@ -13,20 +13,26 @@ export class ProductController {
   ) {}
 
   @MessagePattern({ cmd: 'get:product' })
-  @Describe('Get all product')
+  @Describe({ description: 'Get all product', fe: ['inventory/product:open'] })
   async findAll(): Promise<CustomResponse> {
     return this.service.findAll();
   }
 
   @MessagePattern({ cmd: 'get:product/*' })
-  @Describe('Get a product by id')
+  @Describe({
+    description: 'Get a product by id',
+    fe: ['inventory/product:edit', 'inventory/product:detail'],
+  })
   async findOne(@Payload() data: any): Promise<CustomResponse | null> {
     const param = data.params;
     return this.service.findOne(param.id);
   }
 
   @MessagePattern({ cmd: 'post:product' })
-  @Describe('Create a new product')
+  @Describe({
+    description: 'Create a new product',
+    fe: ['inventory/product:add'],
+  })
   async create(@Payload() data: any): Promise<CustomResponse> {
     const createData = data.body;
     console.log(data.params);
@@ -43,7 +49,7 @@ export class ProductController {
   }
 
   @MessagePattern({ cmd: 'put:product/*' })
-  @Describe('Modify product')
+  @Describe({ description: 'Modify product', fe: ['inventory/product:edit'] })
   async update(@Payload() data: any): Promise<CustomResponse> {
     const param = data.params;
     const body = data.body;
@@ -59,7 +65,7 @@ export class ProductController {
   }
 
   @MessagePattern({ cmd: 'delete:product/*' })
-  @Describe('Delete product')
+  @Describe({ description: 'Delete product', fe: ['inventory/product:delete'] })
   async delete(@Payload() data: any): Promise<CustomResponse> {
     const param = data.params;
     const response = await this.service.delete(param.id);
@@ -74,14 +80,28 @@ export class ProductController {
   }
 
   @MessagePattern({ cmd: 'get:product-codes/*' })
-  @Describe('Get product code by product_id')
+  @Describe({
+    description: 'Get product code by product_id',
+    fe: [
+      'inventory/product:edit',
+      'inventory/product:add',
+      'inventory/product:detail',
+    ],
+  })
   async getProductCodes(@Payload() data: any): Promise<CustomResponse> {
     const param = data.params;
     return this.service.getProductCodes(param.id);
   }
 
   @MessagePattern({ cmd: 'post:generate-product-code/*' })
-  @Describe('Generate product code')
+  @Describe({
+    description: 'Generate product code',
+    fe: [
+      'inventory/product:add',
+      'inventory/product:detail',
+      'inventory/product:edit',
+    ],
+  })
   async generateProductCode(@Payload() data: any): Promise<CustomResponse> {
     const param = data.params;
     const body = data.body;
@@ -100,14 +120,24 @@ export class ProductController {
   }
 
   @MessagePattern({ cmd: 'delete:product-code/*' })
-  @Describe('Delete product code')
+  @Describe({
+    description: 'Delete product code',
+    fe: [
+      'inventory/product:add',
+      'inventory/product:detail',
+      'inventory/product:edit',
+    ],
+  })
   async deleteProductCode(@Payload() data: any): Promise<CustomResponse> {
     const param = data.params;
     return this.service.deleteProductCode(param.id);
   }
 
   @MessagePattern({ cmd: 'get:product-barcode/*' })
-  @Describe('Get product code by barcode')
+  @Describe({
+    description: 'Get product code by barcode',
+    fe: ['transaction/sales:add', 'transaction/sales:edit'],
+  })
   async getProductCode(@Payload() data: any): Promise<CustomResponse> {
     const param = data.params;
     const body = data.body;

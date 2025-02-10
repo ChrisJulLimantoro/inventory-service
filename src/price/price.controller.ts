@@ -12,40 +12,53 @@ export class PriceController {
     @Inject('TRANSACTION') private readonly transactionClient: ClientProxy,
   ) {}
 
+  // UNUSED
   @MessagePattern({ cmd: 'get:price' })
-  @Describe('Get all price')
+  @Describe({
+    description: 'Get all price',
+    fe: [
+      'master/price:open',
+      'inventory/product:add',
+      'inventory/product:edit',
+      'inventory/product:detail',
+    ],
+  })
   async findAll(@Payload() data: any): Promise<CustomResponse> {
     const { filter, order_by } = data.body;
     return this.service.findAll(filter, order_by);
   }
 
-  @MessagePattern({ cmd: 'get:price/*' })
-  @Describe('Get a price by id')
-  async findOne(@Payload() data: any): Promise<CustomResponse | null> {
-    const param = data.params;
-    return this.service.findOne(param.id);
-  }
+  // @MessagePattern({ cmd: 'get:price/*' })
+  // @Describe({ description: 'Get a price by id' })
+  // async findOne(@Payload() data: any): Promise<CustomResponse | null> {
+  //   const param = data.params;
+  //   return this.service.findOne(param.id);
+  // }
 
-  @MessagePattern({ cmd: 'post:price' })
-  @Describe('Create a new price')
-  async create(@Payload() data: any): Promise<CustomResponse> {
-    const createData = data.body;
-    console.log(data.params);
-    createData.owner_id = data.params.user.id;
+  // UNUSED
+  // @MessagePattern({ cmd: 'post:price' })
+  // @Describe({ description: 'Create a new price' })
+  // async create(@Payload() data: any): Promise<CustomResponse> {
+  //   const createData = data.body;
+  //   console.log(data.params);
+  //   createData.owner_id = data.params.user.id;
 
-    const response = await this.service.create(createData);
-    if (response.success) {
-      this.marketplaceClient.emit(
-        { service: 'marketplace', module: 'price', action: 'create' },
-        response.data,
-      );
-      this.transactionClient.emit({ cmd: 'price_created' }, response.data);
-    }
-    return response;
-  }
+  //   const response = await this.service.create(createData);
+  //   if (response.success) {
+  //     this.marketplaceClient.emit(
+  //       { service: 'marketplace', module: 'price', action: 'create' },
+  //       response.data,
+  //     );
+  //     this.transactionClient.emit({ cmd: 'price_created' }, response.data);
+  //   }
+  //   return response;
+  // }
 
   @MessagePattern({ cmd: 'put:price/*' })
-  @Describe('Modify price')
+  @Describe({
+    description: 'Modify price',
+    fe: ['master/price:detail'],
+  })
   async update(@Payload() data: any): Promise<CustomResponse> {
     const param = data.params;
     const body = data.body;
@@ -60,23 +73,24 @@ export class PriceController {
     return response;
   }
 
-  @MessagePattern({ cmd: 'delete:price/*' })
-  @Describe('Delete price')
-  async delete(@Payload() data: any): Promise<CustomResponse> {
-    const param = data.params;
-    const response = await this.service.delete(param.id);
-    if (response.success) {
-      this.marketplaceClient.emit(
-        { service: 'marketplace', module: 'price', action: 'softdelete' },
-        { id: response.data.id },
-      );
-      this.transactionClient.emit({ cmd: 'price_deleted' }, response.data.id);
-    }
-    return response;
-  }
+  // UNUSED
+  // @MessagePattern({ cmd: 'delete:price/*' })
+  // @Describe({ description: 'Delete price' })
+  // async delete(@Payload() data: any): Promise<CustomResponse> {
+  //   const param = data.params;
+  //   const response = await this.service.delete(param.id);
+  //   if (response.success) {
+  //     this.marketplaceClient.emit(
+  //       { service: 'marketplace', module: 'price', action: 'softdelete' },
+  //       { id: response.data.id },
+  //     );
+  //     this.transactionClient.emit({ cmd: 'price_deleted' }, response.data.id);
+  //   }
+  //   return response;
+  // }
 
   @MessagePattern({ cmd: 'post:bulk-price' })
-  @Describe('Create bulk price')
+  @Describe({ description: 'Create bulk price', fe: ['master/price:add'] })
   async createBulk(@Payload() data: any): Promise<CustomResponse> {
     const createData = data.body;
     createData.owner_id = data.params.user.id;
@@ -95,7 +109,7 @@ export class PriceController {
   }
 
   @MessagePattern({ cmd: 'delete:bulk-price/*' })
-  @Describe('Delete bulk price')
+  @Describe({ description: 'Delete bulk price', fe: ['master/price:delete'] })
   async deleteBulk(@Payload() data: any): Promise<CustomResponse> {
     const id = data.params.id.split(';');
     const response = await this.service.bulkDelete(id[0], id[1]);

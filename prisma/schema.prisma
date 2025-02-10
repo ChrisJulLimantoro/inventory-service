@@ -115,6 +115,7 @@ model Company {
   id       String         @id @db.Uuid @default(uuid())
   name     String
   code     String
+  owner_id  String?       @db.Uuid
 
   stores Store[]
   categories Category[]

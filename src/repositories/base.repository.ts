@@ -27,7 +27,6 @@ export class BaseRepository<T> {
       ...(this.isSoftDelete ? { deleted_at: null } : {}),
       ...filter, // Add the provided filter conditions
     };
-    console.log(whereConditions);
     return this.prisma[this.modelName].findMany({
       where: whereConditions, // Apply dynamic filter along with soft delete condition
       include: this.relations,
