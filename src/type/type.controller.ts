@@ -94,8 +94,7 @@ export class TypeController {
   @MessagePattern({ cmd: 'post:bulk-type' })
   @Describe({ description: 'Create bulk type', fe: ['master/category:add'] })
   async createBulk(@Payload() data: any): Promise<CustomResponse> {
-    const createData = data.body;
-    createData.owner_id = data.params.user.id;
+    const createData = data.body.types;
 
     const response = await this.service.bulkCreate(createData);
     if (response.success) {

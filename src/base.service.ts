@@ -74,6 +74,8 @@ export abstract class BaseService {
     const errors: { index: string; error: string }[] = [];
     const entries = Object.entries(data);
 
+    console.log('entries', entries);
+
     // Validate all data before insertion
     const validatedData = entries
       .map(([key, item]) => {
