@@ -10,4 +10,33 @@ export class ProductCodeRepository extends BaseRepository<any> {
     };
     super(prisma, 'productCode', relations, true); // 'role' is the Prisma model name
   }
+
+  async getProductCode(code: string) {
+    return this.prisma.productCode.findFirst({
+      where: {
+        barcode: code,
+        deleted_at: null,
+      },
+      include: {
+        product: {
+          include: {
+            type: {
+              include: {
+                prices: {
+                  where: {
+                    deleted_at: null,
+                    is_active: true,
+                  },
+                  orderBy: {
+                    created_at: 'desc',
+                  },
+                },
+                category: true,
+              },
+            },
+          },
+        },
+      },
+    });
+  }
 }

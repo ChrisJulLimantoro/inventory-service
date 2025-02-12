@@ -19,15 +19,18 @@ export class BaseRepository<T> {
   }
 
   // Get all records with possible relations and filter criteria
-  async findAll(filter?: Record<string, any>): Promise<T[]> {
+  async findAll(
+    filter?: Record<string, any>,
+    order_by?: Record<string, any>,
+  ): Promise<T[]> {
     const whereConditions: Record<string, any> = {
       ...(this.isSoftDelete ? { deleted_at: null } : {}),
       ...filter, // Add the provided filter conditions
     };
-
     return this.prisma[this.modelName].findMany({
       where: whereConditions, // Apply dynamic filter along with soft delete condition
       include: this.relations,
+      orderBy: order_by ? order_by : { created_at: 'asc' },
     });
   }
 
@@ -76,7 +79,6 @@ export class BaseRepository<T> {
 
   // function for count
   async count(filter?: Record<string, any>): Promise<number> {
-    console.log(this.modelName, filter);
     return this.prisma[this.modelName].count({
       where: filter,
     });

@@ -4,7 +4,7 @@ export class UpdatePriceRequest {
   price: number;
 
   constructor({ price }) {
-    this.price = price;
+    this.price = parseFloat(price);
   }
 
   static schema() {

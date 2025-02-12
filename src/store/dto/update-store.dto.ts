@@ -7,6 +7,7 @@ export class UpdateStoreRequest {
   is_active: boolean | null;
   is_float_price: boolean | null;
   is_flex_price: boolean | null;
+  tax_percentage: number | null;
 
   constructor({
     name,
@@ -15,6 +16,7 @@ export class UpdateStoreRequest {
     is_active,
     is_float_price,
     is_flex_price,
+    tax_percentage,
   }) {
     this.name = name;
     this.code = code;
@@ -22,6 +24,7 @@ export class UpdateStoreRequest {
     this.is_active = is_active;
     this.is_float_price = is_float_price;
     this.is_flex_price = is_flex_price;
+    this.tax_percentage = parseFloat(tax_percentage);
   }
 
   static schema() {
@@ -32,6 +35,7 @@ export class UpdateStoreRequest {
       is_active: z.boolean().optional(),
       is_float_price: z.boolean().optional(),
       is_flex_price: z.boolean().optional(),
+      tax_percentage: z.number().min(0).max(100).optional(),
     });
   }
 }

@@ -13,20 +13,31 @@ export class TypeController {
   ) {}
 
   @MessagePattern({ cmd: 'get:type' })
-  @Describe('Get all type')
-  async findAll(): Promise<CustomResponse> {
-    return this.service.findAll();
+  @Describe({
+    description: 'Get all type',
+    fe: [
+      'inventory/product:add',
+      'inventory/product:edit',
+      'inventory/product:detail',
+    ],
+  })
+  async findAll(@Payload() data: any): Promise<CustomResponse> {
+    const filter = { category_id: data.body.category_id };
+    return this.service.findAll(filter);
   }
-
-  @MessagePattern({ cmd: 'get:type/*' })
-  @Describe('Get a type by id')
-  async findOne(@Payload() data: any): Promise<CustomResponse | null> {
-    const param = data.params;
-    return this.service.findOne(param.id);
-  }
+  // UNUSED
+  // @MessagePattern({ cmd: 'get:type/*' })
+  // @Describe({ description: 'Get a type by id' })
+  // async findOne(@Payload() data: any): Promise<CustomResponse | null> {
+  //   const param = data.params;
+  //   return this.service.findOne(param.id);
+  // }
 
   @MessagePattern({ cmd: 'post:type' })
-  @Describe('Create a new type')
+  @Describe({
+    description: 'Create a new type',
+    fe: ['master/category:edit', 'master/category:detail'],
+  })
   async create(@Payload() data: any): Promise<CustomResponse> {
     const createData = data.body;
     console.log(data.params);
@@ -44,7 +55,10 @@ export class TypeController {
   }
 
   @MessagePattern({ cmd: 'put:type/*' })
-  @Describe('Modify type')
+  @Describe({
+    description: 'Modify type',
+    fe: ['master/category:edit', 'master/category:detail'],
+  })
   async update(@Payload() data: any): Promise<CustomResponse> {
     const param = data.params;
     const body = data.body;
@@ -60,7 +74,10 @@ export class TypeController {
   }
 
   @MessagePattern({ cmd: 'delete:type/*' })
-  @Describe('Delete type')
+  @Describe({
+    description: 'Delete type',
+    fe: ['master/category:edit', 'master/category:detail'],
+  })
   async delete(@Payload() data: any): Promise<CustomResponse> {
     const param = data.params;
     const response = await this.service.delete(param.id);
@@ -70,6 +87,24 @@ export class TypeController {
         { id: response.data.id },
       );
       this.transactionClient.emit({ cmd: 'type_deleted' }, response.data.id);
+    }
+    return response;
+  }
+
+  @MessagePattern({ cmd: 'post:bulk-type' })
+  @Describe({ description: 'Create bulk type', fe: ['master/category:add'] })
+  async createBulk(@Payload() data: any): Promise<CustomResponse> {
+    const createData = data.body.types;
+
+    const response = await this.service.bulkCreate(createData);
+    if (response.success) {
+      response.data.forEach((item) => {
+        this.marketplaceClient.emit(
+          { service: 'marketplace', module: 'type', action: 'create' },
+          item,
+        );
+        this.transactionClient.emit({ cmd: 'type_created' }, item);
+      });
     }
     return response;
   }

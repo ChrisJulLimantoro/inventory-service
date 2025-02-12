@@ -7,7 +7,11 @@ export class ProductRepository extends BaseRepository<any> {
   constructor(prisma: PrismaService) {
     const relations = {
       store: true,
-      type: true,
+      type: {
+        include: {
+          category: true,
+        },
+      },
       product_codes: {
         where: {
           deleted_at: null,
@@ -15,5 +19,16 @@ export class ProductRepository extends BaseRepository<any> {
       },
     };
     super(prisma, 'product', relations, true); // 'role' is the Prisma model name
+  }
+
+  async getTypeCode(type_id: string) {
+    return this.prisma.type.findFirst({
+      where: {
+        id: type_id,
+      },
+      select: {
+        code: true,
+      },
+    });
   }
 }

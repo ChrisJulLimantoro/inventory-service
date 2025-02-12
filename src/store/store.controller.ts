@@ -65,13 +65,8 @@ export class StoreController {
     const channel = context.getChannelRef();
     const originalMsg = context.getMessage();
 
-    const sanitizedData = {
-      code: data.code,
-      name: data.name,
-    };
-
     try {
-      const response = await this.service.update(data.id, sanitizedData);
+      const response = await this.service.update(data.id, data);
       if (response.success) {
         channel.ack(originalMsg);
       }
