@@ -14,8 +14,11 @@ export class ProductController {
 
   @MessagePattern({ cmd: 'get:product' })
   @Describe({ description: 'Get all product', fe: ['inventory/product:open'] })
-  async findAll(): Promise<CustomResponse> {
-    return this.service.findAll();
+  async findAll(@Payload() data: any): Promise<CustomResponse> {
+    const filter = {
+      store: { company_id: data.body.auth.company_id },
+    };
+    return this.service.findAll(filter);
   }
 
   @MessagePattern({ cmd: 'get:product/*' })

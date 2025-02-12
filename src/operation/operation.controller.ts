@@ -22,8 +22,9 @@ export class OperationController {
       'transaction/sales:detail',
     ],
   })
-  async findAll(): Promise<CustomResponse> {
-    return this.service.findAll();
+  async findAll(@Payload() data: any): Promise<CustomResponse> {
+    const filter = { store_id: data.body.auth.store_id };
+    return this.service.findAll(filter);
   }
 
   @MessagePattern({ cmd: 'get:operation/*' })
