@@ -115,4 +115,82 @@ export class ProductService extends BaseService {
     };
     return CustomResponse.success('Product code retrieved!', data, 200);
   }
+
+  async getStockCard(filters: any) {
+    const data = [
+      {
+        code: 'P001',
+        name: 'Product 1',
+        category_id: 'Category',
+        initial_stock: 10,
+        initial_stock_gram: 100,
+        incoming_basic_goods: 5,
+        incoming_basic_goods_gram: 50,
+        sales: 2,
+        sales_gram: 20,
+        outgoing_basic_goods: 1,
+        outgoing_basic_goods_gram: 10,
+        purchase: 2,
+        purchase_gram: 20,
+        tukar_tambah_tukar_kurang: 0,
+        final_stock: 12,
+        final_stock_gram: 120,
+        unit_price_per_gram: 1000,
+        total_price_rp: 120000,
+      }
+    ]
+    return CustomResponse.success('Stock card fetched!', data, 200);
+  }
+
+  async getStockMutation(filters: any) {
+    const data = [
+      {
+        date: '2021-01-01',
+        code: 'P001',
+        name: 'Product 1',
+        description: 'Initial stock',
+        in: 10,
+        out: 0,
+        balance: 10,
+      },
+      {
+        date: '2021-01-01',
+        code: 'P001',
+        name: 'Product 1',
+        description: 'Incoming basic goods',
+        in: 5,
+        out: 0,
+        balance: 15,
+      },
+      {
+        date: '2021-01-01',
+        code: 'P001',
+        name: 'Product 1',
+        description: 'Sales',
+        in: 0,
+        out: 2,
+        balance: 13,
+      },
+      {
+        date: '2021-01-01',
+        code: 'P001',
+        name: 'Product 1',
+        description: 'Outgoing basic goods',
+        in: 0,
+        out: 1,
+        balance: 12,
+      },
+      {
+        date: '2021-01-01',
+        code: 'P001',
+        name: 'Product 1',
+        description: 'Purchase',
+        in: 2,
+        out: 0,
+        balance: 14,
+      },
+    ]
+
+    return CustomResponse.success('Stock mutation fetched!', data, 200);
+  }
 }
