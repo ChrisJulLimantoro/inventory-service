@@ -133,7 +133,14 @@ export class ProductController {
   })
   async deleteProductCode(@Payload() data: any): Promise<CustomResponse> {
     const param = data.params;
-    return this.service.deleteProductCode(param.id);
+    const response = await this.service.deleteProductCode(param.id);
+    if (response) {
+      this.marketplaceClient.emit(
+        { module: 'product', action: 'deleteProductCode' },
+        { id: param.id },
+      );
+    }
+    return response;
   }
 
   @MessagePattern({ cmd: 'get:product-barcode/*' })
@@ -148,17 +155,16 @@ export class ProductController {
   }
 
   @MessagePattern({ cmd: 'get:stock-card' })
-  @Describe({description :'Get stock card'})
-  async getStockCard(@Payload() data:any): Promise<CustomResponse> {
+  @Describe({ description: 'Get stock card' })
+  async getStockCard(@Payload() data: any): Promise<CustomResponse> {
     const body = data.body;
     return this.service.getStockCard(body);
   }
 
   @MessagePattern({ cmd: 'get:stock-mutation' })
-  @Describe( {description: 'Get stock mutation'})
-  async getStockMutation(@Payload() data:any): Promise<CustomResponse> {
+  @Describe({ description: 'Get stock mutation' })
+  async getStockMutation(@Payload() data: any): Promise<CustomResponse> {
     const body = data.body;
     return this.service.getStockMutation(body);
   }
-  
 }
