@@ -91,4 +91,19 @@ export class ProductController {
     }
     return response;
   }
+
+  @MessagePattern({ cmd: 'get:stock-card' })
+  @Describe('Get stock card')
+  async getStockCard(@Payload() data:any): Promise<CustomResponse> {
+    const body = data.body;
+    return this.service.getStockCard(body);
+  }
+
+  @MessagePattern({ cmd: 'get:stock-mutation' })
+  @Describe('Get stock mutation')
+  async getStockMutation(@Payload() data:any): Promise<CustomResponse> {
+    const body = data.body;
+    return this.service.getStockMutation(body);
+  }
+  
 }
