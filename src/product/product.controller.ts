@@ -155,15 +155,15 @@ export class ProductController {
   }
 
   @MessagePattern({ cmd: 'get:stock-card' })
-  @Describe({ description: 'Get stock card' })
-  async getStockCard(@Payload() data: any): Promise<CustomResponse> {
+  @Describe({description :'Get stock card',fe: ['inventory/stock:open'] })
+  async getStockCard(@Payload() data:any): Promise<CustomResponse> {
     const body = data.body;
     return this.service.getStockCard(body);
   }
 
   @MessagePattern({ cmd: 'get:stock-mutation' })
-  @Describe({ description: 'Get stock mutation' })
-  async getStockMutation(@Payload() data: any): Promise<CustomResponse> {
+  @Describe( {description: 'Get stock mutation', fe: ['inventory/stock-mutation:open']})
+  async getStockMutation(@Payload() data:any): Promise<CustomResponse> {
     const body = data.body;
     return this.service.getStockMutation(body);
   }
