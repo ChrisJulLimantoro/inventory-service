@@ -119,6 +119,7 @@ model Company {
 
   stores Store[]
   categories Category[]
+  accounts Account[]
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
@@ -141,6 +142,7 @@ model Store {
   company Company @relation(fields: [company_id], references: [id])
   products Product[]
   opeartions Operation[]
+  accounts Account[]
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
@@ -159,8 +161,10 @@ model Operation {
   uom         String
   description String? @db.Text
   store_id  String @db.Uuid
+  account_id String? @db.Uuid
 
-  store Store @relation(fields: [store_id], references: [id])
+  store Store @relation(fields: [store_id], references: [id]) 
+  account Account? @relation(fields: [account_id], references: [id])
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
@@ -168,4 +172,28 @@ model Operation {
 
   @@map("operations")
   @@index([deleted_at])
+}
+
+model Account {
+  id  String   @id @db.Uuid
+  code Int
+  name        String
+  account_type_id Int //  kas/bank/giro/piutang/hutang
+  description String?
+  store_id String? @db.Uuid
+  company_id String @db.Uuid
+  deactive Boolean @default(false)
+  
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  deleted_at DateTime?
+
+  store  Store?  @relation(fields: [store_id], references: [id])
+  company Company @relation(fields: [company_id], references: [id])
+  operation Operation[]
+
+  @@map("accounts")
+  @@index([deleted_at])
+  @@index([company_id])
+  @@index([store_id])
 }
