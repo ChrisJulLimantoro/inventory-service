@@ -1,9 +1,16 @@
 import { Controller, Inject } from '@nestjs/common';
-import { ClientProxy, MessagePattern, Payload } from '@nestjs/microservices';
+import {
+  ClientProxy,
+  Ctx,
+  EventPattern,
+  MessagePattern,
+  Payload,
+} from '@nestjs/microservices';
 import { Describe } from 'src/decorator/describe.decorator';
 import { CustomResponse } from 'src/exception/dto/custom-response.dto';
 import { ProductService } from './product.service';
 import { Exempt } from 'src/decorator/exempt.decorator';
+import { RmqAckHelper } from 'src/helper/rmq-ack.helper';
 
 @Controller('product')
 export class ProductController {
@@ -170,5 +177,20 @@ export class ProductController {
   async getStockMutation(@Payload() data: any): Promise<CustomResponse> {
     const body = data.body;
     return this.service.getStockMutation(body);
+  }
+
+  @EventPattern({ cmd: 'product_code_updated' })
+  @Exempt()
+  async productStatusUpdated(@Payload() data: any, @Ctx() context: any) {
+    console.log('Product Code Status Updated', data);
+    const sanitizedData = { status: data.status, weight: data.weight };
+
+    await RmqAckHelper.handleMessageProcessing(context, async () => {
+      const response = await this.service.updateProductCode(
+        data.id,
+        sanitizedData,
+      );
+      if (!response.success) throw new Error('Company update failed');
+    })();
   }
 }

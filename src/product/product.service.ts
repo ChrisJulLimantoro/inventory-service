@@ -8,6 +8,7 @@ import { ProductCodeRepository } from 'src/repositories/product-code.repository'
 import { CustomResponse } from 'src/exception/dto/custom-response.dto';
 import { CreateProductCodeDto } from './dto/create-productCode.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { UpdateProductCodeDto } from './dto/update-productCode.dto';
 
 @Injectable()
 export class ProductService extends BaseService {
@@ -73,6 +74,20 @@ export class ProductService extends BaseService {
     return CustomResponse.success('Product code generated!', code, 201);
   }
 
+  async updateProductCode(id: string, data: any): Promise<CustomResponse> {
+    const code = await this.productCodeRepository.findOne(id);
+    if (!code) {
+      throw new Error('Product code not found');
+    }
+    const validated = new UpdateProductCodeDto(data);
+    const updateData = this.validation.validate(
+      validated,
+      UpdateProductCodeDto.schema(),
+    );
+    await this.productCodeRepository.update(id, updateData);
+    return CustomResponse.success('Product code updated!', null, 200);
+  }
+
   async deleteProductCode(id: any) {
     const code = await this.productCodeRepository.findOne(id);
     if (!code) {
@@ -112,6 +127,7 @@ export class ProductService extends BaseService {
         : code.fixed_price,
       weight: code.weight,
       type: `${code.product.type.code} - ${code.product.type.category.name}`,
+      status: code.status,
     };
     return CustomResponse.success('Product code retrieved!', data, 200);
   }
@@ -137,8 +153,8 @@ export class ProductService extends BaseService {
         final_stock_gram: 120,
         unit_price_per_gram: 1000,
         total_price_rp: 120000,
-      }
-    ]
+      },
+    ];
     return CustomResponse.success('Stock card fetched!', data, 200);
   }
 
@@ -189,7 +205,7 @@ export class ProductService extends BaseService {
         out: 0,
         balance: 14,
       },
-    ]
+    ];
 
     return CustomResponse.success('Stock mutation fetched!', data, 200);
   }
