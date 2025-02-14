@@ -3,6 +3,7 @@ import { ClientProxy, MessagePattern, Payload } from '@nestjs/microservices';
 import { Describe } from 'src/decorator/describe.decorator';
 import { CustomResponse } from 'src/exception/dto/custom-response.dto';
 import { ProductService } from './product.service';
+import { Exempt } from 'src/decorator/exempt.decorator';
 
 @Controller('product')
 export class ProductController {
@@ -148,17 +149,18 @@ export class ProductController {
   }
 
   @MessagePattern({ cmd: 'get:stock-card' })
-  @Describe({description :'Get stock card'})
-  async getStockCard(@Payload() data:any): Promise<CustomResponse> {
+  @Describe({ description: 'Get stock card' })
+  @Exempt()
+  async getStockCard(@Payload() data: any): Promise<CustomResponse> {
     const body = data.body;
     return this.service.getStockCard(body);
   }
 
   @MessagePattern({ cmd: 'get:stock-mutation' })
-  @Describe( {description: 'Get stock mutation'})
-  async getStockMutation(@Payload() data:any): Promise<CustomResponse> {
+  @Describe({ description: 'Get stock mutation' })
+  @Exempt()
+  async getStockMutation(@Payload() data: any): Promise<CustomResponse> {
     const body = data.body;
     return this.service.getStockMutation(body);
   }
-  
 }
