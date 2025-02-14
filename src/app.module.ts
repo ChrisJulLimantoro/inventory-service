@@ -11,6 +11,7 @@ import { PriceModule } from './price/price.module';
 import { CompanyModule } from './company/company.module';
 import { StoreModule } from './store/store.module';
 import { OperationModule } from './operation/operation.module';
+import { AccountModule } from './account/account.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { OperationModule } from './operation/operation.module';
     CompanyModule,
     StoreModule,
     OperationModule,
+    AccountModule,
   ],
   controllers: [AppController],
   providers: [MessagePatternDiscoveryService],
