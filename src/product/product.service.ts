@@ -9,6 +9,7 @@ import { CustomResponse } from 'src/exception/dto/custom-response.dto';
 import { CreateProductCodeDto } from './dto/create-productCode.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UpdateProductCodeDto } from './dto/update-productCode.dto';
+import { QrService } from 'src/qr/qr.service';
 
 @Injectable()
 export class ProductService extends BaseService {
@@ -21,6 +22,7 @@ export class ProductService extends BaseService {
     private readonly productCodeRepository: ProductCodeRepository,
     protected readonly validation: ValidationService,
     protected readonly prisma: PrismaService,
+    protected readonly qrService: QrService,
   ) {
     super(validation);
   }
@@ -72,6 +74,16 @@ export class ProductService extends BaseService {
     );
     const code = await this.productCodeRepository.create(validated);
     return CustomResponse.success('Product code generated!', code, 201);
+  }
+
+  async generateQRCode(product_code_id: any) {
+    const code = await this.productCodeRepository.findOne(product_code_id);
+    if (!code) {
+      throw new Error('Product code not found');
+    }
+    const qr_code_data = `${code.barcode};${code.id}`;
+    const qr = await this.qrService.generateQRCode(qr_code_data);
+    return CustomResponse.success('QR Product code generated!', qr, 200);
   }
 
   async updateProductCode(id: string, data: any): Promise<CustomResponse> {

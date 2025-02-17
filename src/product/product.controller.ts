@@ -162,6 +162,22 @@ export class ProductController {
     return this.service.getProductCode(param.id, body.store);
   }
 
+  @MessagePattern({ cmd: 'post:generate-product-code-qr/*' })
+  @Describe({
+    description: 'Generate QR code',
+    fe: ['inventory/product:edit', 'inventory/product:detail'],
+  })
+  async generateQRCode(@Payload() data: any): Promise<CustomResponse> {
+    try {
+      const param = data.params;
+      const response = await this.service.generateQRCode(param.id);
+
+      return response;
+    } catch (e) {
+      return CustomResponse.error(e.message, null, 400);
+    }
+  }
+
   @MessagePattern({ cmd: 'get:stock-card' })
   @Describe({ description: 'Get stock card', fe: ['inventory/stock:open'] })
   async getStockCard(@Payload() data: any): Promise<CustomResponse> {

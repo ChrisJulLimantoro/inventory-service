@@ -5,9 +5,10 @@ import { ProductRepository } from 'src/repositories/product.repository';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { SharedModule } from 'src/shared.module';
 import { ProductCodeRepository } from 'src/repositories/product-code.repository';
+import { QrModule } from 'src/qr/qr.module';
 
 @Module({
-  imports: [SharedModule],
+  imports: [SharedModule, QrModule],
   controllers: [ProductController],
   providers: [
     ProductService,

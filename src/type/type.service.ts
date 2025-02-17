@@ -45,6 +45,14 @@ export class TypeService extends BaseService {
     return super.bulkCreate(data);
   }
 
+  async create(data: Record<string, any>): Promise<CustomResponse> {
+    const catCode = await this.generateCode(data.category_id);
+    const comp = await this.categoryRepository.findOne(data.category_id);
+    data.code = comp.code + catCode;
+    console.log(data);
+    return super.create(data);
+  }
+
   async generateCode(category_id: string): Promise<string> {
     const count = await this.typeRepository.count({ category_id });
     return (count + 1).toString().padStart(2, '0');

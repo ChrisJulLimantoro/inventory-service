@@ -12,6 +12,7 @@ import { CompanyModule } from './company/company.module';
 import { StoreModule } from './store/store.module';
 import { OperationModule } from './operation/operation.module';
 import { AccountModule } from './account/account.module';
+import { QrModule } from './qr/qr.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { AccountModule } from './account/account.module';
     StoreModule,
     OperationModule,
     AccountModule,
+    QrModule,
   ],
   controllers: [AppController],
   providers: [MessagePatternDiscoveryService],
