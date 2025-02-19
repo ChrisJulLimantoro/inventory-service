@@ -79,6 +79,7 @@ model ProductCode {
   weight      Decimal @db.Decimal
   fixed_price       Decimal @db.Decimal
   status      Int @default(0) // 0: Available 1: Sold Out 2: Taken
+  buy_price   Decimal @db.Decimal
 
   report_stock report_stocks[]
   product Product @relation(fields: [product_id], references: [id])
