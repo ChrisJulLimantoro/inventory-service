@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -26,6 +20,7 @@ model Category{
 
   types Type[]
   company Company @relation(fields: [company_id], references: [id])
+  report_stock report_stocks[]
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
@@ -45,6 +40,7 @@ model Type{
   category Category @relation(fields: [category_id], references: [id])
   products Product[]
   prices Price[]
+  report_stock report_stocks[]
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
@@ -84,6 +80,7 @@ model ProductCode {
   fixed_price       Decimal @db.Decimal
   status      Int @default(0) // 0: Available 1: Sold Out 2: Taken
 
+  report_stock report_stocks[]
   product Product @relation(fields: [product_id], references: [id])
 
   created_at DateTime @default(now())
@@ -120,6 +117,7 @@ model Company {
   stores Store[]
   categories Category[]
   accounts Account[]
+  report_stock report_stocks[]
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
@@ -143,6 +141,7 @@ model Store {
   products Product[]
   opeartions Operation[]
   accounts Account[]
+  report_stock report_stocks[]
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
@@ -196,4 +195,45 @@ model Account {
   @@index([deleted_at])
   @@index([company_id])
   @@index([store_id])
+}
+
+model stock_source {
+  id            Int             @id @default(autoincrement())
+  name          String
+  code         String
+  report_stocks report_stocks[]
+}
+
+model report_stocks {
+  id                String       @id @default(uuid()) @db.Uuid
+  company_id        String       @db.Uuid
+  company_code      String
+  company_name      String
+  store_id          String       @db.Uuid
+  store_code        String
+  store_name        String
+  source_id         Int
+  source_name       String
+  trans_id          String       @db.Uuid
+  trans_code        String
+  trans_date        DateTime
+  category_id       String       @db.Uuid
+  category_code     String
+  category_name     String
+  type_id           String       @db.Uuid
+  type_code         String
+  type_name         String
+  product_id        String       @db.Uuid
+  product_name      String
+  product_code_code String
+  product_code_id   String       @db.Uuid
+  weight            Decimal      @db.Decimal
+  price             Decimal      @db.Decimal
+  
+  category          Category     @relation(fields: [category_id], references: [id])
+  company           Company      @relation(fields: [company_id], references: [id])
+  product_code      ProductCode  @relation(fields: [product_code_id], references: [id])
+  source            stock_source @relation(fields: [source_id], references: [id])
+  store             Store        @relation(fields: [store_id], references: [id])
+  type              Type         @relation(fields: [type_id], references: [id])
 }
