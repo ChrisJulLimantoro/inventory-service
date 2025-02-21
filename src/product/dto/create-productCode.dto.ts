@@ -6,13 +6,15 @@ export class CreateProductCodeDto {
   status: number;
   weight: number;
   fixed_price: number;
+  buy_price: number;
 
-  constructor({ barcode, product_id, status, weight, fixed_price }) {
+  constructor({ barcode, product_id, status, weight, fixed_price, buy_price }) {
     this.barcode = barcode;
     this.product_id = product_id;
     this.status = status;
     this.weight = parseFloat(weight);
     this.fixed_price = parseFloat(fixed_price);
+    this.buy_price = parseFloat(buy_price);
   }
 
   static schema() {
@@ -22,6 +24,7 @@ export class CreateProductCodeDto {
       status: z.number().optional(),
       weight: z.number(),
       fixed_price: z.number(),
+      buy_price: z.number(),
     });
   }
 }

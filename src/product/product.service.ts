@@ -144,7 +144,7 @@ export class ProductService extends BaseService {
     return CustomResponse.success('Product code retrieved!', data, 200);
   }
 
-  async getStockCard(filters: any) {
+  async getStockMutation(filters: any) {
     const data = [
       {
         code: 'P001',
@@ -170,7 +170,7 @@ export class ProductService extends BaseService {
     return CustomResponse.success('Stock card fetched!', data, 200);
   }
 
-  async getStockMutation(filters: any) {
+  async getStockCard(filters: any) {
     const data = [
       {
         date: '2021-01-01',
