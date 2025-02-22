@@ -18,6 +18,7 @@ export class ProductController {
     private readonly service: ProductService,
     @Inject('MARKETPLACE') private readonly marketplaceClient: ClientProxy,
     @Inject('TRANSACTION') private readonly transactionClient: ClientProxy,
+    @Inject('FINANCE') private readonly financeClient: ClientProxy,
   ) {}
 
   @MessagePattern({ cmd: 'get:product' })
@@ -126,6 +127,10 @@ export class ProductController {
         { cmd: 'product_code_generated' },
         response.data,
       );
+      this.financeClient.emit(
+        { cmd: 'product_code_generated' },
+        response.data,
+      )
     }
     return response;
   }
@@ -145,6 +150,10 @@ export class ProductController {
     if (response) {
       this.marketplaceClient.emit(
         { module: 'product', action: 'deleteProductCode' },
+        { id: param.id },
+      );
+      this.financeClient.emit(
+        { cmd: 'product_code_deleted' },
         { id: param.id },
       );
     }
@@ -245,6 +254,10 @@ export class ProductController {
         sanitizedData,
       );
       if (!response.success) throw new Error('Company update failed');
+      if (response.success) {
+        this.financeClient.emit({ cmd: 'product_code_updated' }, response.data);
+      }
     })();
+
   }
 }
