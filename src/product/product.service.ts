@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { BaseService } from 'src/base.service';
 import { ProductRepository } from 'src/repositories/product.repository';
 import { ValidationService } from 'src/validation/validation.service';
@@ -10,6 +10,7 @@ import { CreateProductCodeDto } from './dto/create-productCode.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UpdateProductCodeDto } from './dto/update-productCode.dto';
 import { QrService } from 'src/qr/qr.service';
+import { ClientProxy } from '@nestjs/microservices';
 
 @Injectable()
 export class ProductService extends BaseService {
@@ -23,6 +24,7 @@ export class ProductService extends BaseService {
     protected readonly validation: ValidationService,
     protected readonly prisma: PrismaService,
     protected readonly qrService: QrService,
+    @Inject('TRANSACTION') private readonly transactionClient: ClientProxy,
   ) {
     super(validation);
   }
@@ -74,6 +76,126 @@ export class ProductService extends BaseService {
     );
     const code = await this.productCodeRepository.create(validated);
     return CustomResponse.success('Product code generated!', code, 201);
+  }
+
+  async getProductCodeOut(filter?: Record<string, any>, store_id?: string) {
+    filter = filter || {};
+    filter.status = 3;
+    const store = await this.prisma.store.findUnique({
+      where: {
+        id: store_id,
+        deleted_at: null,
+        is_active: true,
+      },
+      select: {
+        id: true,
+        is_active: true,
+        is_flex_price: true,
+        is_float_price: true,
+      },
+    });
+    if (!store) {
+      throw new Error('Store not found');
+    }
+    const codes = await this.productCodeRepository.findAll(filter);
+    const data = codes.map((code) => {
+      return {
+        id: code.id,
+        barcode: code.barcode,
+        name: `${code.barcode} - ${code.product.name}`,
+        price: store.is_float_price
+          ? code.product.type.prices[0].price
+          : code.fixed_price,
+        taken_out_at: code.taken_out_at,
+        weight: code.weight,
+        type: `${code.product.type.code} - ${code.product.type.category.name}`,
+        status: code.status,
+      };
+    });
+    console.log(data);
+    return CustomResponse.success('Product codes retrieved!', data, 200);
+  }
+
+  async productCodeOut(data: Record<string, any>) {
+    const { date, reason, codes, auth } = data;
+    try {
+      await this.prisma.$transaction(async (prisma) => {
+        for (const item of codes) {
+          const code = await this.productCodeRepository.findOne(item.id);
+          if (!code) {
+            throw new Error(`Product code ${item.id} is invalid`); // item.id, because code is undefined
+          }
+          if (code.status !== 0) {
+            throw new Error(`Product code ${code.barcode} is not available`);
+          }
+          if (code.product.store_id !== auth.store_id) {
+            throw new Error(
+              `Product code ${code.barcode} is not in this store`,
+            );
+          }
+          await this.productCodeRepository.update(item.id, {
+            status: 3,
+            taken_out_at: new Date(date),
+          });
+          // TODO: Add stock mutation (ELLA)
+        }
+      });
+    } catch (e) {
+      return CustomResponse.error(e.message, null, 400);
+    }
+
+    // FOR SYNC to other service
+    for (const item of codes) {
+      const code = await this.productCodeRepository.findOne(item.id);
+      this.transactionClient.emit(
+        { cmd: 'product_code_updated' },
+        {
+          id: item.id,
+          barcode: code.barcode,
+          product_id: code.product_id,
+          status: code.status,
+          weight: code.weight,
+          fixed_price: code.fixed_price,
+          taken_out_at: code.taken_out_at,
+        },
+      );
+    }
+
+    return CustomResponse.success('Product code out!', null, 200);
+  }
+
+  async unstockOut(id: string) {
+    const code = await this.productCodeRepository.findOne(id);
+    try {
+      if (!code) {
+        throw new Error('Product code not found');
+      }
+      if (code.status !== 3) {
+        throw new Error('Product code not taken out');
+      }
+      await this.productCodeRepository.update(id, {
+        status: 0,
+        taken_out_at: null,
+      });
+    } catch (e) {
+      return CustomResponse.error(e.message, null, 400);
+    }
+    // TODO: Add stock mutation (ELLA)
+
+    // FOR SYNC to other service
+    this.transactionClient.emit(
+      { cmd: 'product_code_updated' },
+      {
+        id: code.id,
+        barcode: code.barcode,
+        product_id: code.product_id,
+        status: 0,
+        weight: code.weight,
+        fixed_price: code.fixed_price,
+        taken_out_at: null,
+      },
+    );
+    return CustomResponse.success('Product code unstocked!', null, 200);
   }
 
   async generateQRCode(product_code_id: any) {

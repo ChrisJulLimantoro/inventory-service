@@ -162,6 +162,41 @@ export class ProductController {
     return this.service.getProductCode(param.id, body.store);
   }
 
+  @MessagePattern({ cmd: 'get:stock-out' })
+  @Describe({
+    description: 'Get stock out',
+    fe: ['inventory/stock-out:open'],
+  })
+  async getStockOut(@Payload() data: any): Promise<CustomResponse> {
+    const filter = {
+      status: 3,
+      product: {
+        store_id: data.body.auth.store_id,
+      },
+    };
+    const store_id = data.body.auth.store_id;
+    return this.service.getProductCodeOut(filter, store_id);
+  }
+
+  @MessagePattern({ cmd: 'post:stock-out' })
+  @Describe({
+    description: 'stocks out',
+    fe: ['inventory/stock-out:add'],
+  })
+  async productCodeOut(@Payload() data: any): Promise<CustomResponse> {
+    return this.service.productCodeOut(data.body);
+  }
+
+  @MessagePattern({ cmd: 'delete:unstock-out/*' })
+  @Describe({
+    description: 'Unstock out',
+    fe: ['inventory/stock-out:delete'],
+  })
+  async unstockOut(@Payload() data: any): Promise<CustomResponse> {
+    const id = data.params.id;
+    return this.service.unstockOut(id);
+  }
+
   @MessagePattern({ cmd: 'post:generate-product-code-qr/*' })
   @Describe({
     description: 'Generate QR code',
@@ -180,19 +215,20 @@ export class ProductController {
 
   @MessagePattern({ cmd: 'get:stock-card' })
   @Describe({
-    description :'Get stock card',
-    fe: [
-      'finance/stock-card:open'
-    ] 
+    description: 'Get stock card',
+    fe: ['finance/stock-card:open'],
   })
-  async getStockCard(@Payload() data:any): Promise<CustomResponse> {
+  async getStockCard(@Payload() data: any): Promise<CustomResponse> {
     const body = data.body;
     return this.service.getStockCard(body);
   }
 
   @MessagePattern({ cmd: 'get:stock-mutation' })
-  @Describe( {description: 'Get stock mutation', fe: ['inventory/stock-mutation:open']})
-  async getStockMutation(@Payload() data:any): Promise<CustomResponse> {
+  @Describe({
+    description: 'Get stock mutation',
+    fe: ['inventory/stock-mutation:open'],
+  })
+  async getStockMutation(@Payload() data: any): Promise<CustomResponse> {
     const body = data.body;
     return this.service.getStockMutation(body);
   }

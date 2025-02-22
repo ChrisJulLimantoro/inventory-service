@@ -56,7 +56,7 @@ export class CategoryService extends BaseService {
                 deleted_at: null,
               },
               orderBy: {
-                date: 'desc',
+                created_at: 'desc',
               },
             },
           },
