@@ -25,6 +25,7 @@ export class ProductService extends BaseService {
     protected readonly prisma: PrismaService,
     protected readonly qrService: QrService,
     @Inject('TRANSACTION') private readonly transactionClient: ClientProxy,
+    @Inject('MARKETPLACE') private readonly marketplaceClient: ClientProxy,
   ) {
     super(validation);
   }
@@ -159,6 +160,21 @@ export class ProductService extends BaseService {
           taken_out_at: code.taken_out_at,
         },
       );
+      this.marketplaceClient.emit(
+        {
+          module: 'product',
+          action: 'updateProductCode',
+        },
+        {
+          id: item.id,
+          barcode: code.barcode,
+          product_id: code.product_id,
+          status: code.status,
+          weight: code.weight,
+          fixed_price: code.fixed_price,
+          taken_out_at: code.taken_out_at,
+        },
+      );
     }
 
     return CustomResponse.success('Product code out!', null, 200);
@@ -185,6 +201,21 @@ export class ProductService extends BaseService {
     // FOR SYNC to other service
     this.transactionClient.emit(
       { cmd: 'product_code_updated' },
+      {
+        id: code.id,
+        barcode: code.barcode,
+        product_id: code.product_id,
+        status: 0,
+        weight: code.weight,
+        fixed_price: code.fixed_price,
+        taken_out_at: null,
+      },
+    );
+    this.marketplaceClient.emit(
+      {
+        module: 'product',
+        action: 'updateProductCode',
+      },
       {
         id: code.id,
         barcode: code.barcode,
