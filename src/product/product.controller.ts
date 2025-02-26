@@ -127,6 +127,7 @@ export class ProductController {
         { cmd: 'product_code_generated' },
         response.data,
       );
+      response.data.store_id = body.store_id;
       this.financeClient.emit(
         { cmd: 'product_code_generated' },
         response.data,

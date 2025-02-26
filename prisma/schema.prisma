@@ -79,6 +79,8 @@ model ProductCode {
   status      Int @default(0) // 0: Available 1: Sold Out 2: Returned 3: Taken Out by the Owner
   taken_out_at DateTime?
   buy_price   Decimal @db.Decimal
+  tax_purchase Decimal @db.Decimal @default(0)
+  account_id String? @db.Uuid //account_id used when purchase product code
 
   product Product @relation(fields: [product_id], references: [id])
 

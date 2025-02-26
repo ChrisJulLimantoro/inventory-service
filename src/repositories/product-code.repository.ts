@@ -13,6 +13,11 @@ export class ProductCodeRepository extends BaseRepository<any> {
               category: true,
             },
           },
+          store: {
+            include: {
+              company: true,
+            }
+          },
         },
       },
     };
