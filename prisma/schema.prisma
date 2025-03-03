@@ -7,191 +7,192 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Category{
-  id          String @id @db.Uuid @default(uuid())
-  code        String
-  name        String
-  purity      String
-  metal_type  Int // 1: Gold, 2: Silver, 3: Red Gold, 4: White Gold, 5: Platinum
-  weight_tray Decimal @db.Decimal
+model Category {
+  id           String  @id @default(uuid()) @db.Uuid
+  code         String
+  name         String
+  purity       String
+  metal_type   Int // 1: Gold, 2: Silver, 3: Red Gold, 4: White Gold, 5: Platinum
+  weight_tray  Decimal @db.Decimal
   weight_paper Decimal @db.Decimal
-  description String? @db.Text
-  company_id  String @db.Uuid
+  description  String? @db.Text
+  company_id   String  @db.Uuid
 
-  types Type[]
+  types   Type[]
   company Company @relation(fields: [company_id], references: [id])
 
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
   deleted_at DateTime?
 
+  @@index([deleted_at])
   @@map("categories")
-  @@index([deleted_at])
 }
 
-model Type{
-  id          String @id @db.Uuid @default(uuid())
+model Type {
+  id          String  @id @default(uuid()) @db.Uuid
   code        String
   name        String
   description String? @db.Text
-  category_id String @db.Uuid
+  category_id String  @db.Uuid
 
-  category Category @relation(fields: [category_id], references: [id])
+  category Category  @relation(fields: [category_id], references: [id])
   products Product[]
-  prices Price[]
+  prices   Price[]
 
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
   deleted_at DateTime?
 
-  @@map("types")
   @@index([deleted_at])
+  @@map("types")
 }
 
-model Product{
-  id          String @id @db.Uuid @default(uuid())
+model Product {
+  id          String   @id @default(uuid()) @db.Uuid
   code        String
   name        String
-  description String? @db.Text
+  description String?  @db.Text
   images      String[] // multiple image for product
   status      Int // 0: Inactive, 1: Active, 2: Sold Out
-  type_id     String @db.Uuid
-  store_id    String @db.Uuid
+  type_id     String   @db.Uuid
+  store_id    String   @db.Uuid
 
-  type Type @relation(fields: [type_id], references: [id])
-  store Store @relation(fields: [store_id], references: [id])
+  type          Type          @relation(fields: [type_id], references: [id])
+  store         Store         @relation(fields: [store_id], references: [id])
   product_codes ProductCode[]
 
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
   deleted_at DateTime?
 
-  @@map("products")
   @@index([deleted_at])
+  @@map("products")
 }
 
 model ProductCode {
-  id          String @id @db.Uuid @default(uuid())
-  barcode     String
-  product_id  String @db.Uuid
-  weight      Decimal @db.Decimal
-  fixed_price  Decimal @db.Decimal
-  status      Int @default(0) // 0: Available 1: Sold Out 2: Returned 3: Taken Out by the Owner
+  id           String    @id @default(uuid()) @db.Uuid
+  barcode      String
+  product_id   String    @db.Uuid
+  weight       Decimal   @db.Decimal
+  fixed_price  Decimal   @db.Decimal
+  status       Int       @default(0) // 0: Available 1: Sold Out 2: Returned 3: Taken Out by the Owner
   taken_out_at DateTime?
-  buy_price   Decimal @db.Decimal
-  tax_purchase Decimal @db.Decimal @default(0)
-  account_id String? @db.Uuid //account_id used when purchase product code
+  buy_price    Decimal   @default(0) @db.Decimal
+  tax_purchase Decimal   @default(0) @db.Decimal
+  image        String?
+  account_id   String?   @db.Uuid //account_id used when purchase product code
 
   product Product @relation(fields: [product_id], references: [id])
 
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
   deleted_at DateTime?
 
-  @@map("product_codes")
   @@index([deleted_at])
+  @@map("product_codes")
 }
 
 model Price {
-  id         String @id @db.Uuid @default(uuid())
-  price      Decimal @db.Decimal
-  is_active  Boolean @default(true)
-  type_id    String @db.Uuid
-  date       DateTime
+  id        String   @id @default(uuid()) @db.Uuid
+  price     Decimal  @db.Decimal
+  is_active Boolean  @default(true)
+  type_id   String   @db.Uuid
+  date      DateTime
 
   type Type @relation(fields: [type_id], references: [id])
 
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
   deleted_at DateTime?
 
-  @@map("prices")
   @@index([deleted_at])
+  @@map("prices")
 }
 
 model Company {
-  id       String         @id @db.Uuid @default(uuid())
+  id       String  @id @default(uuid()) @db.Uuid
   name     String
   code     String
-  owner_id  String?       @db.Uuid
+  owner_id String? @db.Uuid
 
-  stores Store[]
+  stores     Store[]
   categories Category[]
-  accounts Account[]
+  accounts   Account[]
 
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
   deleted_at DateTime?
 
-  @@map("companies")  
   @@index([deleted_at])
+  @@map("companies")
 }
 
 model Store {
-  id      String         @id @db.Uuid @default(uuid())
-  code    String
-  name    String
-  is_active Boolean @default(true)
-  is_flex_price Boolean @default(false)
+  id             String  @id @default(uuid()) @db.Uuid
+  code           String
+  name           String
+  is_active      Boolean @default(true)
+  is_flex_price  Boolean @default(false)
   is_float_price Boolean @default(false)
-  tax_percentage Decimal @db.Decimal @default(11)
-  company_id String @db.Uuid
+  tax_percentage Decimal @default(11) @db.Decimal
+  company_id     String  @db.Uuid
 
-  company Company @relation(fields: [company_id], references: [id])
-  products Product[]
+  company    Company     @relation(fields: [company_id], references: [id])
+  products   Product[]
   opeartions Operation[]
-  accounts Account[]
+  accounts   Account[]
 
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
   deleted_at DateTime?
 
-  @@map("stores")
   @@index([deleted_at])
   @@index([company_id])
+  @@map("stores")
 }
 
 model Operation {
-  id          String @id @db.Uuid @default(uuid())
+  id          String  @id @default(uuid()) @db.Uuid
   code        String
   name        String
   price       Decimal @db.Decimal
   uom         String
   description String? @db.Text
-  store_id  String @db.Uuid
-  account_id String? @db.Uuid
+  store_id    String  @db.Uuid
+  account_id  String? @db.Uuid
 
-  store Store @relation(fields: [store_id], references: [id]) 
+  store   Store    @relation(fields: [store_id], references: [id])
   account Account? @relation(fields: [account_id], references: [id])
 
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-  deleted_at DateTime?
-
-  @@map("operations")
-  @@index([deleted_at])
-}
-
-model Account {
-  id  String   @id @db.Uuid
-  code Int
-  name        String
-  account_type_id Int //  kas/bank/giro/piutang/hutang
-  description String?
-  store_id String? @db.Uuid
-  company_id String @db.Uuid
-  deactive Boolean @default(false)
-  
   created_at DateTime  @default(now())
   updated_at DateTime  @updatedAt
   deleted_at DateTime?
 
-  store  Store?  @relation(fields: [store_id], references: [id])
-  company Company @relation(fields: [company_id], references: [id])
+  @@index([deleted_at])
+  @@map("operations")
+}
+
+model Account {
+  id              String  @id @db.Uuid
+  code            Int
+  name            String
+  account_type_id Int //  kas/bank/giro/piutang/hutang
+  description     String?
+  store_id        String? @db.Uuid
+  company_id      String  @db.Uuid
+  deactive        Boolean @default(false)
+
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  deleted_at DateTime?
+
+  store     Store?      @relation(fields: [store_id], references: [id])
+  company   Company     @relation(fields: [company_id], references: [id])
   operation Operation[]
 
-  @@map("accounts")
   @@index([deleted_at])
   @@index([company_id])
   @@index([store_id])
+  @@map("accounts")
 }
