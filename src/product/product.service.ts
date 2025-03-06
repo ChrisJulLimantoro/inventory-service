@@ -25,6 +25,7 @@ export class ProductService extends BaseService {
     protected readonly prisma: PrismaService,
     protected readonly qrService: QrService,
     @Inject('TRANSACTION') private readonly transactionClient: ClientProxy,
+    @Inject('MARKETPLACE') private readonly marketplaceClient: ClientProxy,
   ) {
     super(validation);
   }
@@ -159,6 +160,21 @@ export class ProductService extends BaseService {
           taken_out_at: code.taken_out_at,
         },
       );
+      this.marketplaceClient.emit(
+        {
+          module: 'product',
+          action: 'updateProductCode',
+        },
+        {
+          id: item.id,
+          barcode: code.barcode,
+          product_id: code.product_id,
+          status: code.status,
+          weight: code.weight,
+          fixed_price: code.fixed_price,
+          taken_out_at: code.taken_out_at,
+        },
+      );
     }
 
     return CustomResponse.success('Product code out!', null, 200);
@@ -185,6 +201,21 @@ export class ProductService extends BaseService {
     // FOR SYNC to other service
     this.transactionClient.emit(
       { cmd: 'product_code_updated' },
+      {
+        id: code.id,
+        barcode: code.barcode,
+        product_id: code.product_id,
+        status: 0,
+        weight: code.weight,
+        fixed_price: code.fixed_price,
+        taken_out_at: null,
+      },
+    );
+    this.marketplaceClient.emit(
+      {
+        module: 'product',
+        action: 'updateProductCode',
+      },
       {
         id: code.id,
         barcode: code.barcode,
@@ -290,57 +321,5 @@ export class ProductService extends BaseService {
       },
     ];
     return CustomResponse.success('Stock card fetched!', data, 200);
-  }
-
-  async getStockCard(filters: any) {
-    const data = [
-      {
-        date: '2021-01-01',
-        code: 'P001',
-        name: 'Product 1',
-        description: 'Initial stock',
-        in: 10,
-        out: 0,
-        balance: 10,
-      },
-      {
-        date: '2021-01-01',
-        code: 'P001',
-        name: 'Product 1',
-        description: 'Incoming basic goods',
-        in: 5,
-        out: 0,
-        balance: 15,
-      },
-      {
-        date: '2021-01-01',
-        code: 'P001',
-        name: 'Product 1',
-        description: 'Sales',
-        in: 0,
-        out: 2,
-        balance: 13,
-      },
-      {
-        date: '2021-01-01',
-        code: 'P001',
-        name: 'Product 1',
-        description: 'Outgoing basic goods',
-        in: 0,
-        out: 1,
-        balance: 12,
-      },
-      {
-        date: '2021-01-01',
-        code: 'P001',
-        name: 'Product 1',
-        description: 'Purchase',
-        in: 2,
-        out: 0,
-        balance: 14,
-      },
-    ];
-
-    return CustomResponse.success('Stock mutation fetched!', data, 200);
   }
 }

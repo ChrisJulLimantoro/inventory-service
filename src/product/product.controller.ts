@@ -24,10 +24,32 @@ export class ProductController {
   @MessagePattern({ cmd: 'get:product' })
   @Describe({ description: 'Get all product', fe: ['inventory/product:open'] })
   async findAll(@Payload() data: any): Promise<CustomResponse> {
-    const filter = {
-      store: { company_id: data.body.auth.company_id },
-    };
-    return this.service.findAll(filter);
+      var filter: any = {
+          store: { 
+            company: { 
+              id: data.body.company_id ?? data.body.auth.company_id ,
+              owner_id: data.body.owner_id
+            }
+          },
+      };
+
+      if (data.body.type_id && data.body.type_id !== '') {
+          filter.type = filter.type || {}; // Ensure `type` exists
+          filter.type.id = data.body.type_id;
+      }
+
+      if (data.body.category_id && data.body.category_id !== '') {
+          filter.type = filter.type || {}; // Ensure `type` exists
+          filter.type.category = { id: data.body.category_id };
+      }
+
+      // store params
+      if (data.body.store_id && data.body.store_id !== '') {
+          filter.store = { id: data.body.store_id };
+      }
+
+      console.log('filterProduct', filter);
+      return this.service.findAll(filter);
   }
 
   @MessagePattern({ cmd: 'get:product/*' })
@@ -127,6 +149,7 @@ export class ProductController {
         { cmd: 'product_code_generated' },
         response.data,
       );
+      response.data.store_id = body.store_id;
       this.financeClient.emit(
         { cmd: 'product_code_generated' },
         response.data,
@@ -220,16 +243,6 @@ export class ProductController {
     } catch (e) {
       return CustomResponse.error(e.message, null, 400);
     }
-  }
-
-  @MessagePattern({ cmd: 'get:stock-card' })
-  @Describe({
-    description: 'Get stock card',
-    fe: ['finance/stock-card:open'],
-  })
-  async getStockCard(@Payload() data: any): Promise<CustomResponse> {
-    const body = data.body;
-    return this.service.getStockCard(body);
   }
 
   @MessagePattern({ cmd: 'get:stock-mutation' })

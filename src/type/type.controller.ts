@@ -22,7 +22,18 @@ export class TypeController {
     ],
   })
   async findAll(@Payload() data: any): Promise<CustomResponse> {
-    const filter = { category_id: data.body.category_id };
+    var filter :any = {
+        category: {
+          company: { 
+            id: data.body.company_id ?? data.body.auth.company_id ,
+            owner_id: data.body.owner_id
+          }
+        }
+     };
+    if (data.body.category_id &&  data.body.category_id != '') {
+      filter.category_id = data.body.category_id;
+    }
+    
     return this.service.findAll(filter);
   }
   // UNUSED
