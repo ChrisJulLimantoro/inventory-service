@@ -5,12 +5,14 @@ export class UpdateProductRequest {
   code: string | null;
   description: string | null;
   images: string[] | null;
+  tags: string[] | null;
 
-  constructor({ name, code, description, images }) {
+  constructor({ name, code, description, images, tags }) {
     this.name = name;
     this.code = code;
     this.description = description;
     this.images = images;
+    this.tags = tags;
   }
 
   static schema() {
@@ -19,6 +21,7 @@ export class UpdateProductRequest {
       code: z.string().max(25).nullable().optional(),
       description: z.string().max(255).nullable().optional(),
       images: z.array(z.string()).nullable().optional(),
+      tags: z.array(z.string()).nullable().optional(),
     });
   }
 }
