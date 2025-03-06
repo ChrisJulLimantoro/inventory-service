@@ -28,7 +28,7 @@ export class CategoryController {
     // Filter by owner id because it is an master data determined by the owner
     const filter = {
       owner_id: data.body.owner_id,
-      company_id: data.body.company_id,
+      company_id: data.body.auth.company_id,
     };
     return this.service.findAll(filter);
   }
