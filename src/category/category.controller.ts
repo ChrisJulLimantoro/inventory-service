@@ -32,6 +32,11 @@ export class CategoryController {
       },
       company_id: data.body.company_id ?? data.body.auth.company_id,
     };
+    if (data.body.store_id) {
+      filter.company.stores = {
+        some: { id: data.body.store_id },
+      };
+    }
     return this.service.findAll(filter);
   }
 

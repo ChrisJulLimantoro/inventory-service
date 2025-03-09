@@ -245,15 +245,6 @@ export class ProductController {
     }
   }
 
-  @MessagePattern({ cmd: 'get:stock-mutation' })
-  @Describe({
-    description: 'Get stock mutation',
-    fe: ['inventory/stock-mutation:open'],
-  })
-  async getStockMutation(@Payload() data: any): Promise<CustomResponse> {
-    const body = data.body;
-    return this.service.getStockMutation(body);
-  }
 
   @EventPattern({ cmd: 'product_code_updated' })
   @Exempt()

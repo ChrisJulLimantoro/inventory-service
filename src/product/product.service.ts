@@ -297,29 +297,4 @@ export class ProductService extends BaseService {
     return CustomResponse.success('Product code retrieved!', data, 200);
   }
 
-  async getStockMutation(filters: any) {
-    const data = [
-      {
-        code: 'P001',
-        name: 'Product 1',
-        category_id: 'Category',
-        initial_stock: 10,
-        initial_stock_gram: 100,
-        incoming_basic_goods: 5,
-        incoming_basic_goods_gram: 50,
-        sales: 2,
-        sales_gram: 20,
-        outgoing_basic_goods: 1,
-        outgoing_basic_goods_gram: 10,
-        purchase: 2,
-        purchase_gram: 20,
-        tukar_tambah_tukar_kurang: 0,
-        final_stock: 12,
-        final_stock_gram: 120,
-        unit_price_per_gram: 1000,
-        total_price_rp: 120000,
-      },
-    ];
-    return CustomResponse.success('Stock card fetched!', data, 200);
-  }
 }
