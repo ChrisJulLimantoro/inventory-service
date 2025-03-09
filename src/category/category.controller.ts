@@ -26,11 +26,11 @@ export class CategoryController {
   })
   async findAll(@Payload() data: any): Promise<CustomResponse> {
     // Filter by owner id because it is an master data determined by the owner
-    var filter :any = {
+    var filter: any = {
       company: {
         owner_id: data.body.owner_id,
       },
-      company_id: data.body.company_id ?? data.body.auth.company_id,
+      company_id: data.body.auth.company_id,
     };
     if (data.body.store_id) {
       filter.company.stores = {

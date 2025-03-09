@@ -24,32 +24,32 @@ export class ProductController {
   @MessagePattern({ cmd: 'get:product' })
   @Describe({ description: 'Get all product', fe: ['inventory/product:open'] })
   async findAll(@Payload() data: any): Promise<CustomResponse> {
-      var filter: any = {
-          store: { 
-            company: { 
-              id: data.body.company_id ?? data.body.auth.company_id ,
-              owner_id: data.body.owner_id
-            }
-          },
-      };
+    var filter: any = {
+      store: {
+        company: {
+          id: data.body.company_id ?? data.body.auth.company_id,
+          owner_id: data.body.owner_id,
+        },
+      },
+    };
 
-      if (data.body.type_id && data.body.type_id !== '') {
-          filter.type = filter.type || {}; // Ensure `type` exists
-          filter.type.id = data.body.type_id;
-      }
+    if (data.body.type_id && data.body.type_id !== '') {
+      filter.type = filter.type || {}; // Ensure `type` exists
+      filter.type.id = data.body.type_id;
+    }
 
-      if (data.body.category_id && data.body.category_id !== '') {
-          filter.type = filter.type || {}; // Ensure `type` exists
-          filter.type.category = { id: data.body.category_id };
-      }
+    if (data.body.category_id && data.body.category_id !== '') {
+      filter.type = filter.type || {}; // Ensure `type` exists
+      filter.type.category = { id: data.body.category_id };
+    }
 
-      // store params
-      if (data.body.store_id && data.body.store_id !== '') {
-          filter.store = { id: data.body.store_id };
-      }
+    // store params
+    if (data.body.store_id && data.body.store_id !== '') {
+      filter.store = { id: data.body.store_id };
+    }
 
-      console.log('filterProduct', filter);
-      return this.service.findAll(filter);
+    console.log('filterProduct', filter);
+    return this.service.findAll(filter);
   }
 
   @MessagePattern({ cmd: 'get:product/*' })
@@ -150,10 +150,7 @@ export class ProductController {
         response.data,
       );
       response.data.store_id = body.store_id;
-      this.financeClient.emit(
-        { cmd: 'product_code_generated' },
-        response.data,
-      )
+      this.financeClient.emit({ cmd: 'product_code_generated' }, response.data);
     }
     return response;
   }
@@ -262,6 +259,5 @@ export class ProductController {
         this.financeClient.emit({ cmd: 'product_code_updated' }, response.data);
       }
     })();
-
   }
 }
