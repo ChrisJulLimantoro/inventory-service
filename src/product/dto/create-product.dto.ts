@@ -5,15 +5,17 @@ export class CreateProductRequest {
   code: string;
   description: string | null;
   images: string[];
+  tags: string[];
   type_id: string;
   store_id: string;
   status: number;
 
-  constructor({ name, code, description, images, type_id, store_id }) {
+  constructor({ name, code, description, images, tags, type_id, store_id }) {
     this.name = name;
     this.code = code;
     this.description = description;
     this.images = images;
+    this.tags = tags;
     this.type_id = type_id;
     this.store_id = store_id;
     this.status = 1;
@@ -25,6 +27,7 @@ export class CreateProductRequest {
       code: z.string().max(25),
       description: z.string().max(255).nullable().optional(),
       images: z.array(z.string()).optional(),
+      tags: z.array(z.string()).optional(),
       type_id: z.string().uuid(),
       store_id: z.string().uuid(),
       status: z.number().optional(),
