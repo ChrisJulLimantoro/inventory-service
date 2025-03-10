@@ -49,7 +49,9 @@ export class ProductController {
     }
 
     console.log('filterProduct', filter);
-    return this.service.findAll(filter);
+    const resp = await this.service.findAll(filter);
+    console.log('resp', resp);
+    return resp;
   }
 
   @MessagePattern({ cmd: 'get:product/*' })
@@ -241,7 +243,6 @@ export class ProductController {
       return CustomResponse.error(e.message, null, 400);
     }
   }
-
 
   @EventPattern({ cmd: 'product_code_updated' })
   @Exempt()

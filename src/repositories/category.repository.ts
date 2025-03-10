@@ -17,18 +17,33 @@ export class CategoryRepository extends BaseRepository<any> {
     super(prisma, 'category', relations, true); // 'role' is the Prisma model name
   }
 
-  async findAll(filter?: Record<string, any>): Promise<Category[]> {
-    if (filter.company_id) {
-      return super.findAll({ company_id: filter.company_id });
+  async findAll(
+    filter?: Record<string, any>,
+    page?: number,
+    limit?: number,
+    sort?: Record<string, 'asc' | 'desc'>,
+    search?: string,
+  ): Promise<{
+    data: Category[];
+    total?: number;
+    page?: number;
+    totalPages?: number;
+  }> {
+    if (filter?.company_id) {
+      return super.findAll(filter, page, limit, sort, search);
     }
-    // the filter recieved is by owner_id
-    const company = this.prisma.company.findMany({
+
+    // Find all companies owned by the given owner_id
+    const companies = await this.prisma.company.findMany({
       where: filter,
+      select: { id: true },
     });
-    // Change the filter for all the categories that belong to the company owned
-    const newFilter = {
-      company_id: { in: (await company).map((c) => c.id) },
-    };
-    return super.findAll(newFilter);
+
+    // Extract company IDs and adjust the filter
+    const companyIds = companies.map((c) => c.id);
+    const newFilter = { company_id: { in: companyIds } };
+
+    // Call the base repository findAll with the updated filter
+    return super.findAll(newFilter, page, limit, sort, search);
   }
 }

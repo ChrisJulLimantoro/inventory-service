@@ -98,7 +98,8 @@ export class ProductService extends BaseService {
     if (!store) {
       throw new Error('Store not found');
     }
-    const codes = await this.productCodeRepository.findAll(filter);
+    const { data: codes } = await this.productCodeRepository.findAll(filter);
+    console.log(codes);
     const data = codes.map((code) => {
       return {
         id: code.id,
@@ -296,5 +297,4 @@ export class ProductService extends BaseService {
     };
     return CustomResponse.success('Product code retrieved!', data, 200);
   }
-
 }

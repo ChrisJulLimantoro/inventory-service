@@ -30,11 +30,29 @@ export abstract class BaseService {
 
   // Find all
   async findAll(
-    filter: Record<string, any> = {},
-    order_by: Record<string, any> = {},
+    filter?: Record<string, any>,
+    page?: number,
+    limit?: number,
+    sort?: Record<string, 'asc' | 'desc'>,
+    search?: string,
   ): Promise<CustomResponse> {
-    filter = this.parseBooleanValues(filter);
-    const data = await this.repository.findAll(filter, order_by);
+    try {
+      page = page ? parseInt(page.toString()) : 0;
+      limit = limit ? parseInt(limit.toString()) : 0;
+    } catch (error) {
+      return CustomResponse.error('Invalid page or limit', null, 400);
+    }
+    const data = await this.repository.findAll(
+      filter,
+      page,
+      limit,
+      sort,
+      search,
+    );
+    // const transform = {
+    //   ...data,
+    //   data: this.transformPrismaArray(data.data),
+    // };
     return CustomResponse.success('Data Found!', data, 200);
   }
 
