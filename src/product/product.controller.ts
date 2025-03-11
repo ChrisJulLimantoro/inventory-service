@@ -24,6 +24,7 @@ export class ProductController {
   @MessagePattern({ cmd: 'get:product' })
   @Describe({ description: 'Get all product', fe: ['inventory/product:open'] })
   async findAll(@Payload() data: any): Promise<CustomResponse> {
+    const { page, limit, sort, search } = data.body;
     var filter: any = {
       store: {
         company: {
@@ -49,9 +50,7 @@ export class ProductController {
     }
 
     console.log('filterProduct', filter);
-    const resp = await this.service.findAll(filter);
-    console.log('resp', resp);
-    return resp;
+    return this.service.findAll(filter, page, limit, sort);
   }
 
   @MessagePattern({ cmd: 'get:product/*' })
@@ -113,6 +112,23 @@ export class ProductController {
       this.transactionClient.emit({ cmd: 'product_deleted' }, response.data.id);
     }
     return response;
+  }
+
+  @MessagePattern({ cmd: 'get:product-code' })
+  @Describe({
+    description: 'Get all product code',
+    fe: ['inventory/product:edit', 'inventory/product:detail'],
+  })
+  async getAllProductCode(@Payload() data: any): Promise<CustomResponse> {
+    var filter: any = {
+      product: {
+        store_id: data.body.auth.store_id,
+        type: {
+          category_id: data.body.category_id,
+        },
+      },
+    };
+    return this.service.getAllProductCode(filter);
   }
 
   @MessagePattern({ cmd: 'get:product-codes/*' })

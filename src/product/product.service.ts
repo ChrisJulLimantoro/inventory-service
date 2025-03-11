@@ -263,6 +263,11 @@ export class ProductService extends BaseService {
     return CustomResponse.success('Product code deleted!', null, 200);
   }
 
+  async getAllProductCode(filter: Record<string, any>) {
+    const codes = await this.productCodeRepository.findAll(filter);
+    return CustomResponse.success('Product codes retrieved!', codes, 200);
+  }
+
   async getProductCode(barcode: string, store_id: string) {
     const code = await this.productCodeRepository.getProductCode(barcode);
     const store = await this.prisma.store.findUnique({

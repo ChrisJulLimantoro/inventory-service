@@ -136,6 +136,23 @@ export class BaseRepository<T> {
     });
   }
 
+  async deleteWhere(filter: Record<string, any>): Promise<number> {
+    if (filter.length === 0) {
+      throw new Error('Filter cannot be empty');
+    }
+    if (this.isSoftDelete) {
+      filter.deleted_at = null;
+      return this.prisma[this.modelName].updateMany({
+        where: filter,
+        data: { deleted_at: new Date(), updated_at: new Date() },
+      });
+    }
+
+    return this.prisma[this.modelName].deleteMany({
+      where: filter,
+    });
+  }
+
   // Restore a soft deleted record
   async restore(id: string): Promise<T> {
     return this.prisma[this.modelName].update({

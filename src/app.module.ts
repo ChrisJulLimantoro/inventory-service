@@ -13,6 +13,7 @@ import { StoreModule } from './store/store.module';
 import { OperationModule } from './operation/operation.module';
 import { AccountModule } from './account/account.module';
 import { QrModule } from './qr/qr.module';
+import { StockOpnameModule } from './stock-opname/stock-opname.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { QrModule } from './qr/qr.module';
     OperationModule,
     AccountModule,
     QrModule,
+    StockOpnameModule,
   ],
   controllers: [AppController],
   providers: [MessagePatternDiscoveryService],

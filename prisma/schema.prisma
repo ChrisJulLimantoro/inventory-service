@@ -20,6 +20,7 @@ model Category {
 
   types   Type[]
   company Company @relation(fields: [company_id], references: [id])
+  stockOpnames StockOpname[]
 
   created_at DateTime  @default(now())
   updated_at DateTime  @updatedAt
@@ -85,6 +86,7 @@ model ProductCode {
   account_id   String?   @db.Uuid //account_id used when purchase product code
 
   product Product @relation(fields: [product_id], references: [id])
+  StockOpnameDetails StockOpnameDetail[]
 
   created_at DateTime  @default(now())
   updated_at DateTime  @updatedAt
@@ -141,8 +143,9 @@ model Store {
 
   company    Company     @relation(fields: [company_id], references: [id])
   products   Product[]
-  opeartions Operation[]
+  operations Operation[]
   accounts   Account[]
+  stockOpnames StockOpname[]
 
   created_at DateTime  @default(now())
   updated_at DateTime  @updatedAt
@@ -196,4 +199,48 @@ model Account {
   @@index([company_id])
   @@index([store_id])
   @@map("accounts")
+}
+
+model StockOpname {
+  id         String  @id @default(uuid()) @db.Uuid
+  store_id    String  @db.Uuid
+  category_id String  @db.Uuid
+  date        DateTime
+  status      Int     @default(0) // 0: Draft, 1: Done
+  description String? @db.Text
+  is_approved Boolean @default(false)
+  approve_by  String? @db.Uuid
+  approve_at  DateTime?
+
+  store   Store   @relation(fields: [store_id], references: [id])
+  category Category @relation(fields: [category_id], references: [id])
+  details StockOpnameDetail[]
+
+  created_by  String? @db.Uuid
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  deleted_at DateTime?
+
+  @@index([deleted_at])
+  @@unique([store_id,category_id, date])
+  @@map("stock_opnames")
+}
+
+model StockOpnameDetail {
+  id            String  @id @default(uuid()) @db.Uuid
+  stock_opname_id String  @db.Uuid
+  product_code_id String  @db.Uuid
+  description    String? @db.Text
+  scanned       Boolean @default(false)
+
+  stockOpname  StockOpname   @relation(fields: [stock_opname_id], references: [id], onDelete: Cascade)
+  productCode ProductCode @relation(fields: [product_code_id], references: [id])
+
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  deleted_at DateTime?
+
+  @@index([deleted_at])
+  @@unique([stock_opname_id, product_code_id])
+  @@map("stock_opname_details")
 }

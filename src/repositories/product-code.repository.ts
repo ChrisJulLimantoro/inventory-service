@@ -16,7 +16,7 @@ export class ProductCodeRepository extends BaseRepository<any> {
           store: {
             include: {
               company: true,
-            }
+            },
           },
         },
       },
@@ -25,6 +25,9 @@ export class ProductCodeRepository extends BaseRepository<any> {
   }
 
   async getProductCode(code: string) {
+    if (!code) {
+      return null;
+    }
     return this.prisma.productCode.findFirst({
       where: {
         barcode: code,
