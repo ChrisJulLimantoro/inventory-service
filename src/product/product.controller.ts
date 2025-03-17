@@ -192,7 +192,7 @@ export class ProductController {
       );
       this.financeClient.emit(
         { cmd: 'product_code_deleted' },
-        { id: param.id },
+        response,
       );
     }
     return response;

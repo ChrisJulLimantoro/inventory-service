@@ -55,4 +55,14 @@ export class CompanyController {
       'Error processing company_deleted event',
     );
   }
+
+  @EventPattern({ cmd: 'company_sync' })
+  @Exempt()
+  async companySync(@Payload() data: any, @Ctx() context: RmqContext) {
+    await this.handleEvent(
+      context,
+      () => this.service.sync(data),
+      'Error processing company_sync event',
+    );
+  }
 }

@@ -26,6 +26,7 @@ export class ProductService extends BaseService {
     protected readonly qrService: QrService,
     @Inject('TRANSACTION') private readonly transactionClient: ClientProxy,
     @Inject('MARKETPLACE') private readonly marketplaceClient: ClientProxy,
+    @Inject('FINANCE') private readonly financeClient: ClientProxy,
   ) {
     super(validation);
   }
@@ -119,29 +120,32 @@ export class ProductService extends BaseService {
   }
 
   async productCodeOut(data: Record<string, any>) {
+    console.log('this is data out', data);
     const { date, reason, codes, auth } = data;
     try {
-      await this.prisma.$transaction(async (prisma) => {
-        for (const item of codes) {
-          const code = await this.productCodeRepository.findOne(item.id);
-          if (!code) {
-            throw new Error(`Product code ${item.id} is invalid`); // item.id, because code is undefined
-          }
-          if (code.status !== 0) {
-            throw new Error(`Product code ${code.barcode} is not available`);
-          }
-          if (code.product.store_id !== auth.store_id) {
-            throw new Error(
-              `Product code ${code.barcode} is not in this store`,
-            );
-          }
-          await this.productCodeRepository.update(item.id, {
-            status: 3,
-            taken_out_at: new Date(date),
-          });
-          // TODO: Add stock mutation (ELLA)
-        }
-      });
+      // await this.prisma.$transaction(async (prisma) => {
+      //   for (const item of codes) {
+      //     const code = await this.productCodeRepository.findOne(item.id);
+      //     if (!code) {
+      //       throw new Error(`Product code ${item.id} is invalid`); // item.id, because code is undefined
+      //     }
+      //     if (code.status !== 0) {
+      //       throw new Error(`Product code ${code.barcode} is not available`);
+      //     }
+      //     if (code.product.store_id !== auth.store_id) {
+      //       throw new Error(
+      //         `Product code ${code.barcode} is not in this store`,
+      //       );
+      //     }
+      //     await this.productCodeRepository.update(item.id, {
+      //       status: 3,
+      //       taken_out_at: new Date(date),
+      //     });
+      //     // TODO: Add stock mutation (ELLA)
+            await this.financeClient.emit({ cmd: 'stocks_out' }, data);
+
+      //   }
+      // });
     } catch (e) {
       return CustomResponse.error(e.message, null, 400);
     }
@@ -149,33 +153,34 @@ export class ProductService extends BaseService {
     // FOR SYNC to other service
     for (const item of codes) {
       const code = await this.productCodeRepository.findOne(item.id);
-      this.transactionClient.emit(
-        { cmd: 'product_code_updated' },
-        {
-          id: item.id,
-          barcode: code.barcode,
-          product_id: code.product_id,
-          status: code.status,
-          weight: code.weight,
-          fixed_price: code.fixed_price,
-          taken_out_at: code.taken_out_at,
-        },
-      );
-      this.marketplaceClient.emit(
-        {
-          module: 'product',
-          action: 'updateProductCode',
-        },
-        {
-          id: item.id,
-          barcode: code.barcode,
-          product_id: code.product_id,
-          status: code.status,
-          weight: code.weight,
-          fixed_price: code.fixed_price,
-          taken_out_at: code.taken_out_at,
-        },
-      );
+      // this.transactionClient.emit(
+      //   { cmd: 'product_code_updated' },
+      //   {
+      //     id: item.id,
+      //     barcode: code.barcode,
+      //     product_id: code.product_id,
+      //     status: code.status,
+      //     weight: code.weight,
+      //     fixed_price: code.fixed_price,
+      //     taken_out_at: code.taken_out_at,
+      //   },
+      // );
+      // this.marketplaceClient.emit(
+      //   {
+      //     module: 'product',
+      //     action: 'updateProductCode',
+      //   },
+      //   {
+      //     id: item.id,
+      //     barcode: code.barcode,
+      //     product_id: code.product_id,
+      //     status: code.status,
+      //     weight: code.weight,
+      //     fixed_price: code.fixed_price,
+      //     taken_out_at: code.taken_out_at,
+      //   },
+      // );
+      console.log('thecode', code);
     }
 
     return CustomResponse.success('Product code out!', null, 200);
@@ -260,7 +265,7 @@ export class ProductService extends BaseService {
       throw new Error('Product code not found');
     }
     await this.productCodeRepository.delete(id);
-    return CustomResponse.success('Product code deleted!', null, 200);
+    return CustomResponse.success('Product code deleted!', code, 200);
   }
 
   async getAllProductCode(filter: Record<string, any>) {

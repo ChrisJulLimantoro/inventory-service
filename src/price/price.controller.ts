@@ -25,6 +25,9 @@ export class PriceController {
   })
   async findAll(@Payload() data: any): Promise<CustomResponse> {
     const { filter, order_by } = data.body;
+    if (filter.is_active == 'true') {
+      filter.is_active = true;
+    }
     return this.service.findAll(filter, order_by);
   }
 

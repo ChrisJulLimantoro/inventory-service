@@ -13,6 +13,25 @@ import { Exempt } from 'src/decorator/exempt.decorator';
 export class StoreController {
   constructor(private readonly service: StoreService) {}
 
+  private async handleEvent(
+    context: RmqContext,
+    callback: () => Promise<{ success: boolean }>,
+    errorMessage: string,
+  ) {
+    const channel = context.getChannelRef();
+    const originalMsg = context.getMessage();
+
+    try {
+      const response = await callback();
+      if (response.success) {
+        channel.ack(originalMsg);
+      }
+    } catch (error) {
+      console.error(errorMessage, error.stack);
+      channel.nack(originalMsg);
+    }
+  }
+
   @EventPattern({ cmd: 'store_created' })
   @Exempt()
   async storeCreated(@Payload() data: any, @Ctx() context: RmqContext) {
@@ -75,5 +94,15 @@ export class StoreController {
       channel.nack(originalMsg);
       // Optional: Send the error message to a DLQ (Dead Letter Queue) or retry queue
     }
+  }
+
+  @EventPattern({ cmd: 'store_sync' })
+  @Exempt()
+  async storeSync(@Payload() data: any, @Ctx() context: RmqContext) {
+    await this.handleEvent(
+      context,
+      () => this.service.sync(data),
+      'Error processing store_sync event',
+    );
   }
 }
