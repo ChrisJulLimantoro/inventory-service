@@ -122,6 +122,7 @@ export class ProductController {
   async getAllProductCode(@Payload() data: any): Promise<CustomResponse> {
     var filter: any = {
       product: {
+        status: data.body.status,
         store_id: data.body.auth.store_id,
         type: {
           category_id: data.body.category_id,
@@ -222,7 +223,8 @@ export class ProductController {
       },
     };
     const store_id = data.body.auth.store_id;
-    return this.service.getProductCodeOut(filter, store_id);
+    const { page, limit, sort } = data.body;
+    return this.service.getProductCodeOut(filter, store_id, page, limit);
   }
 
   @MessagePattern({ cmd: 'post:stock-out' })
@@ -231,7 +233,10 @@ export class ProductController {
     fe: ['inventory/stock-out:add'],
   })
   async productCodeOut(@Payload() data: any): Promise<CustomResponse> {
-    return this.service.productCodeOut(data.body);
+    data.body = { ...data.body, params: data.params };
+    const res = await this.service.productCodeOut(data.body);
+    console.log(res);
+    return res;
   }
 
   @MessagePattern({ cmd: 'delete:unstock-out/*' })

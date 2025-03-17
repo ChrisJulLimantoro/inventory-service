@@ -83,4 +83,48 @@ export class StockOpnameService extends BaseService {
 
     return CustomResponse.success(deleteStockOpname, 200);
   }
+
+  async approve(id: string, approve_by: string): Promise<CustomResponse> {
+    const stockOpname = await this.stockOpnameRepository.findOne(id);
+    if (!stockOpname) {
+      throw new Error('Stock Opname not found');
+    }
+
+    // Add logic to check the approve by if needed!
+
+    const updateStockOpname = await this.stockOpnameRepository.update(id, {
+      status: 1,
+      approve: true,
+      approve_by: approve_by,
+      approve_at: new Date(),
+    });
+
+    return CustomResponse.success(
+      'Successfully update stock opname',
+      updateStockOpname,
+      200,
+    );
+  }
+
+  async disapprove(id: string, disapprove_by: string): Promise<CustomResponse> {
+    const stockOpname = await this.stockOpnameRepository.findOne(id);
+    if (!stockOpname) {
+      throw new Error('Stock Opname not found');
+    }
+
+    // Add logic to check the disapprove by if needed!
+
+    const updateStockOpname = await this.stockOpnameRepository.update(id, {
+      status: 0,
+      approve: false,
+      approve_by: disapprove_by,
+      approve_at: new Date(),
+    });
+
+    return CustomResponse.success(
+      'Successfully dissaprove stock opname',
+      updateStockOpname,
+      200,
+    );
+  }
 }

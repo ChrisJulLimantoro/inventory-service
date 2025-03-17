@@ -79,7 +79,12 @@ export class ProductService extends BaseService {
     return CustomResponse.success('Product code generated!', code, 201);
   }
 
-  async getProductCodeOut(filter?: Record<string, any>, store_id?: string) {
+  async getProductCodeOut(
+    filter?: Record<string, any>,
+    store_id?: string,
+    page?: number,
+    limit?: number,
+  ) {
     filter = filter || {};
     filter.status = 3;
     const store = await this.prisma.store.findUnique({
@@ -98,7 +103,18 @@ export class ProductService extends BaseService {
     if (!store) {
       throw new Error('Store not found');
     }
-    const { data: codes } = await this.productCodeRepository.findAll(filter);
+    try {
+      page = Number(page) ?? 0;
+      limit = Number(limit) ?? 0;
+    } catch (e) {
+      page = 0;
+      limit = 0;
+    }
+    const { data: codes } = await this.productCodeRepository.findAll(
+      filter,
+      page,
+      limit,
+    );
     console.log(codes);
     const data = codes.map((code) => {
       return {
@@ -109,6 +125,7 @@ export class ProductService extends BaseService {
           ? code.product.type.prices[0].price
           : code.fixed_price,
         taken_out_at: code.taken_out_at,
+        taken_out_reason: code.taken_out_reason,
         weight: code.weight,
         type: `${code.product.type.code} - ${code.product.type.category.name}`,
         status: code.status,
@@ -119,7 +136,7 @@ export class ProductService extends BaseService {
   }
 
   async productCodeOut(data: Record<string, any>) {
-    const { date, reason, codes, auth } = data;
+    const { date, taken_out_reason, codes, auth, params } = data;
     try {
       await this.prisma.$transaction(async (prisma) => {
         for (const item of codes) {
@@ -127,6 +144,7 @@ export class ProductService extends BaseService {
           if (!code) {
             throw new Error(`Product code ${item.id} is invalid`); // item.id, because code is undefined
           }
+          console.log(code.status);
           if (code.status !== 0) {
             throw new Error(`Product code ${code.barcode} is not available`);
           }
@@ -138,11 +156,14 @@ export class ProductService extends BaseService {
           await this.productCodeRepository.update(item.id, {
             status: 3,
             taken_out_at: new Date(date),
+            taken_out_reason: Number(taken_out_reason),
+            taken_out_by: params.user.id,
           });
           // TODO: Add stock mutation (ELLA)
         }
       });
     } catch (e) {
+      console.error(e.message);
       return CustomResponse.error(e.message, null, 400);
     }
 
@@ -193,6 +214,8 @@ export class ProductService extends BaseService {
       await this.productCodeRepository.update(id, {
         status: 0,
         taken_out_at: null,
+        taken_out_by: null,
+        taken_out_reason: 0,
       });
     } catch (e) {
       return CustomResponse.error(e.message, null, 400);

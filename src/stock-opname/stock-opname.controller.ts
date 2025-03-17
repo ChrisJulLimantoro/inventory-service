@@ -17,8 +17,9 @@ export class StockOpnameController {
     var filter: any = {
       store_id: data.body.auth.store_id,
     };
+    const { page, limit, sort, search } = data.body;
 
-    return this.service.findAll(filter);
+    return this.service.findAll(filter, page, limit);
   }
 
   @MessagePattern({ cmd: 'get:stock-opname/*' })
@@ -74,5 +75,23 @@ export class StockOpnameController {
   })
   async delete(@Payload() data: any): Promise<CustomResponse> {
     return this.service.delete(data.params.id);
+  }
+
+  @MessagePattern({ cmd: 'put:stock-opname-approve/*' })
+  @Describe({
+    description: 'Approve Stock Opname',
+    fe: ['inventory/stock-opname:approve'],
+  })
+  async approve(@Payload() data: any): Promise<CustomResponse> {
+    return this.service.approve(data.params.id, data.params.user.id);
+  }
+
+  @MessagePattern({ cmd: 'put:stock-opname-disapprove/*' })
+  @Describe({
+    description: 'Disapprove Stock Opname',
+    fe: ['inventory/stock-opname:disapprove'],
+  })
+  async disapprove(@Payload() data: any): Promise<CustomResponse> {
+    return this.service.disapprove(data.params.id, data.params.user.id);
   }
 }

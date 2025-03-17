@@ -8,7 +8,7 @@ export class StockOpnameDTO {
   date: Date;
   status: number;
   description?: string;
-  is_approved: boolean;
+  approve: boolean;
   approve_by?: string;
   approve_at?: Date;
 
@@ -28,7 +28,7 @@ export class StockOpnameDTO {
     date,
     status,
     description,
-    is_approved,
+    approve,
     approve_by,
     approve_at,
     store,
@@ -45,7 +45,7 @@ export class StockOpnameDTO {
     this.date = new Date(date);
     this.status = status;
     this.description = description;
-    this.is_approved = is_approved;
+    this.approve = approve;
     this.approve_by = approve_by;
     this.approve_at = approve_at ? new Date(approve_at) : undefined;
 

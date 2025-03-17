@@ -24,7 +24,8 @@ export class OperationController {
   })
   async findAll(@Payload() data: any): Promise<CustomResponse> {
     const filter = { store_id: data.body.auth.store_id };
-    return this.service.findAll(filter);
+    const { page, limit, sort, search } = data.body;
+    return this.service.findAll(filter, page, limit);
   }
 
   @MessagePattern({ cmd: 'get:operation/*' })
