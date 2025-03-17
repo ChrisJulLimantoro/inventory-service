@@ -77,9 +77,11 @@ model ProductCode {
   barcode      String
   product_id   String    @db.Uuid
   weight       Decimal   @db.Decimal
-  fixed_price  Decimal   @db.Decimal
-  status       Int       @default(0) // 0: Available 1: Sold Out 2: Returned 3: Taken Out by the Owner
+  fixed_price   Decimal    @db.Decimal
+  status       Int       @default(0) // 0: Available 1: Sold 2: Returned 3: Taken Out by the Owner
   taken_out_at DateTime?
+  taken_out_reason Int  @default(0) // 0: none, 1: repair, 2: lost, 3: taken out by the owner
+  taken_out_by String?   @db.Uuid
   buy_price    Decimal   @default(0) @db.Decimal
   tax_purchase Decimal   @default(0) @db.Decimal
   image        String?
@@ -208,7 +210,7 @@ model StockOpname {
   date        DateTime
   status      Int     @default(0) // 0: Draft, 1: Done
   description String? @db.Text
-  is_approved Boolean @default(false)
+  approve Boolean @default(false)
   approve_by  String? @db.Uuid
   approve_at  DateTime?
 

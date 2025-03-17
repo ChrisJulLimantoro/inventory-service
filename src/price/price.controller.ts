@@ -12,7 +12,7 @@ export class PriceController {
     @Inject('TRANSACTION') private readonly transactionClient: ClientProxy,
   ) {}
 
-  // UNUSED
+  // USED
   @MessagePattern({ cmd: 'get:price' })
   @Describe({
     description: 'Get all price',
@@ -25,9 +25,7 @@ export class PriceController {
   })
   async findAll(@Payload() data: any): Promise<CustomResponse> {
     const { filter, order_by } = data.body;
-    if (filter.is_active == 'true') {
-      filter.is_active = true;
-    }
+    filter.is_active = Boolean(filter.is_active);
     return this.service.findAll(filter, order_by);
   }
 
