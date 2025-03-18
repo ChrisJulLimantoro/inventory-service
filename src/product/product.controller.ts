@@ -239,6 +239,18 @@ export class ProductController {
     return res;
   }
 
+  @MessagePattern({ cmd: 'post:stock-repaired' })
+  @Describe({
+    description: 'stocks repaired',
+    fe: ['inventory/stock-out:open'],
+  })
+  async productCodeRepaired(@Payload() data: any): Promise<CustomResponse> {
+    data.body = { ...data.body, params: data.params };
+    const res = await this.service.productCodeRepaired(data.body);
+    console.log(res);
+    return res;
+  }
+
   @MessagePattern({ cmd: 'delete:unstock-out/*' })
   @Describe({
     description: 'Unstock out',
