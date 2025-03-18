@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { BaseService } from 'src/base.service';
 import { StockOpnameRepository } from 'src/repositories/stock-opname.repository';
 import { ValidationService } from 'src/validation/validation.service';
@@ -7,6 +7,7 @@ import { StockOpnameDetailDTO } from './dto/stock-opname-detail.dto';
 import { StockOpnameDetailRepository } from 'src/repositories/stock-opname-detail.repository';
 import { CustomResponse } from 'src/exception/dto/custom-response.dto';
 import { ProductCodeRepository } from 'src/repositories/product-code.repository';
+import { ClientProxy } from '@nestjs/microservices';
 
 @Injectable()
 export class StockOpnameService extends BaseService {
@@ -19,6 +20,7 @@ export class StockOpnameService extends BaseService {
     private readonly stockOpnameDetailRepository: StockOpnameDetailRepository,
     private readonly productCodeRepository: ProductCodeRepository,
     protected readonly validation: ValidationService,
+    @Inject('FINANCE') private readonly financeClient: ClientProxy,
   ) {
     super(validation);
   }
@@ -98,6 +100,49 @@ export class StockOpnameService extends BaseService {
       approve_by: approve_by,
       approve_at: new Date(),
     });
+
+    const stockNotScanned = await this.stockOpnameRepository.findNotScanned(id)
+    // console.log('this is stock not scanned',stockNotScanned);
+    // this is stock not scanned [
+    //   {
+    //     id: 'c9172e6c-be97-4e3e-a4ac-c1d25fc7b62f',
+    //     barcode: 'AA0020100040001',
+    //     product_id: '38043fba-3b36-43d7-a7c9-0e6317916868',
+    //     weight: 12,
+    //     fixed_price: 5000,
+    //     status: 0,
+    //     taken_out_at: null,
+    //     taken_out_reason: 0,
+    //     taken_out_by: null,
+    //     buy_price: 400000,
+    //     tax_purchase: 44000,
+    //     image: 'uploads\\product\\88813eb4-bfd2-4b7b-b555-d461a986b13b.png',
+    //     account_id: 'f609be50-160a-4edd-b3ac-755ab5c5739a',
+    //     created_at: 2025-03-18T06:49:50.612Z,
+    //     updated_at: 2025-03-18T06:49:50.612Z,
+    //     deleted_at: null,
+    //     product: {
+    //       id: '38043fba-3b36-43d7-a7c9-0e6317916868',
+    //       code: 'AA002010004',
+    //       name: 'Putih',
+    //       description: 'asdf',
+    //       images: [Array],
+    //       status: 1,
+    //       tags: [],
+    //       type_id: '19d5aba0-b8ff-4091-b0a8-a34d837a653a',
+    //       store_id: '8dedffbb-f267-490a-9feb-e1547b01fcda',
+    //       created_at: 2025-03-18T06:49:01.709Z,
+    //       updated_at: 2025-03-18T06:49:01.709Z,
+    //       deleted_at: null,
+    //       type: [Object]
+    //     }
+    //   }
+    // ]
+    
+
+    if (stockNotScanned.length > 0) {
+      this.financeClient.emit({ cmd: 'stock_opname_approved' }, {stockNotScanned, trans_date: new Date()});
+    }
 
     return CustomResponse.success(
       'Successfully update stock opname',

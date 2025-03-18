@@ -161,6 +161,7 @@ export class ProductService extends BaseService {
             taken_out_by: params.user.id,
           });
           // TODO: Add stock mutation (ELLA)
+          this.financeClient.emit({ cmd: 'stock_out' }, { productCode: code, reason: Number(taken_out_reason), trans_date: new Date(date) });
         }
       });
     } catch (e) {
@@ -198,7 +199,6 @@ export class ProductService extends BaseService {
           taken_out_at: code.taken_out_at,
         },
       );
-      console.log('thecode', code);
     }
 
     return CustomResponse.success('Product code out!', null, 200);
@@ -223,6 +223,7 @@ export class ProductService extends BaseService {
       return CustomResponse.error(e.message, null, 400);
     }
     // TODO: Add stock mutation (ELLA)
+    this.financeClient.emit({ cmd: 'unstock_out' }, { productCode: code });
 
     // FOR SYNC to other service
     this.transactionClient.emit(
