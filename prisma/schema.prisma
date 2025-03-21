@@ -61,7 +61,6 @@ model Product {
   code        String
   name        String
   description String?  @db.Text
-  images      String[] // multiple image for product
   status      Int // 0: Inactive, 1: Active, 2: Sold Out
   tags        String[]
   type_id     String   @db.Uuid
