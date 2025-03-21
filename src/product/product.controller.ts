@@ -193,7 +193,7 @@ export class ProductController {
       );
       this.financeClient.emit(
         { cmd: 'product_code_deleted' },
-        { id: param.id },
+        response,
       );
     }
     return response;
@@ -235,6 +235,18 @@ export class ProductController {
   async productCodeOut(@Payload() data: any): Promise<CustomResponse> {
     data.body = { ...data.body, params: data.params };
     const res = await this.service.productCodeOut(data.body);
+    console.log(res);
+    return res;
+  }
+
+  @MessagePattern({ cmd: 'post:stock-repaired' })
+  @Describe({
+    description: 'stocks repaired',
+    fe: ['inventory/stock-out:open'],
+  })
+  async productCodeRepaired(@Payload() data: any): Promise<CustomResponse> {
+    data.body = { ...data.body, params: data.params };
+    const res = await this.service.productCodeRepaired(data.body);
     console.log(res);
     return res;
   }

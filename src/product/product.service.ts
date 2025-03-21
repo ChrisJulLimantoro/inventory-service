@@ -26,6 +26,7 @@ export class ProductService extends BaseService {
     protected readonly qrService: QrService,
     @Inject('TRANSACTION') private readonly transactionClient: ClientProxy,
     @Inject('MARKETPLACE') private readonly marketplaceClient: ClientProxy,
+    @Inject('FINANCE') private readonly financeClient: ClientProxy,
   ) {
     super(validation);
   }
@@ -159,7 +160,8 @@ export class ProductService extends BaseService {
             taken_out_reason: Number(taken_out_reason),
             taken_out_by: params.user.id,
           });
-          // TODO: Add stock mutation (ELLA)
+          // Add stock mutation (ELLA)
+          this.financeClient.emit({ cmd: 'stock_out' }, { productCode: code, reason: Number(taken_out_reason), trans_date: new Date(date) });
         }
       });
     } catch (e) {
@@ -220,7 +222,8 @@ export class ProductService extends BaseService {
     } catch (e) {
       return CustomResponse.error(e.message, null, 400);
     }
-    // TODO: Add stock mutation (ELLA)
+    // Add stock mutation (ELLA)
+    this.financeClient.emit({ cmd: 'unstock_out' }, { productCode: code });
 
     // FOR SYNC to other service
     this.transactionClient.emit(
@@ -283,7 +286,7 @@ export class ProductService extends BaseService {
       throw new Error('Product code not found');
     }
     await this.productCodeRepository.delete(id);
-    return CustomResponse.success('Product code deleted!', null, 200);
+    return CustomResponse.success('Product code deleted!', code, 200);
   }
 
   async getAllProductCode(filter: Record<string, any>) {
@@ -324,5 +327,63 @@ export class ProductService extends BaseService {
       status: code.status,
     };
     return CustomResponse.success('Product code retrieved!', data, 200);
+  }
+
+  async productCodeRepaired(data: Record<string, any>) {
+    const { auth, owner_id, weight, expense, id , params, account_id } = data;
+    try {
+      await this.prisma.$transaction(async (prisma) => {
+        const code = await this.productCodeRepository.findOne(id);
+        if (!code) {
+          throw new Error(`Product code ${id} is invalid`); // item.id, because code is undefined
+        }
+        if (code.product.store_id !== auth.store_id) {
+          throw new Error(
+            `Product code ${code.barcode} is not in this store`,
+          );
+        }
+        // TODOCEJE UPDATE STATUS
+        // await this.productCodeRepository.update(id, {
+        //   status: 0,
+        // });
+        // Add stock mutation (ELLA)
+        this.financeClient.emit({ cmd: 'stock_repaired' }, { productCode: code, trans_date: new Date(), account_id, weight, expense });
+      });
+    } catch (e) {
+      console.error(e.message);
+      return CustomResponse.error(e.message, null, 400);
+    }
+
+    // FOR SYNC to other service TODOCEJE product code updated
+    // const code = await this.productCodeRepository.findOne(id);
+    // this.transactionClient.emit(
+    //   { cmd: 'product_code_updated' },
+    //   {
+    //     id: id,
+    //     barcode: code.barcode,
+    //     product_id: code.product_id,
+    //     status: code.status,
+    //     weight: code.weight,
+    //     fixed_price: code.fixed_price,
+    //     taken_out_at: code.taken_out_at,
+    //   },
+    // );
+    // this.marketplaceClient.emit(
+    //   {
+    //     module: 'product',
+    //     action: 'updateProductCode',
+    //   },
+    //   {
+    //     id: id,
+    //     barcode: code.barcode,
+    //     product_id: code.product_id,
+    //     status: code.status,
+    //     weight: code.weight,
+    //     fixed_price: code.fixed_price,
+    //     taken_out_at: code.taken_out_at,
+    //   },
+    // );
+
+    return CustomResponse.success('Product code out!', null, 200);
   }
 }
