@@ -29,21 +29,20 @@ export class CategoryRepository extends BaseRepository<any> {
     page?: number;
     totalPages?: number;
   }> {
-    if (filter?.company_id) {
-      return super.findAll(filter, page, limit, sort, search);
-    }
+    console.log('filter', filter);
+    return super.findAll(filter, page, limit, sort, search);
 
-    // Find all companies owned by the given owner_id
-    const companies = await this.prisma.company.findMany({
-      where: filter,
-      select: { id: true },
-    });
+    // // Find all companies owned by the given owner_id
+    // const companies = await this.prisma.company.findMany({
+    //   where: filter,
+    //   select: { id: true },
+    // });
 
-    // Extract company IDs and adjust the filter
-    const companyIds = companies.map((c) => c.id);
-    const newFilter = { company_id: { in: companyIds } };
+    // // Extract company IDs and adjust the filter
+    // const companyIds = companies.map((c) => c.id);
+    // const newFilter = { company_id: { in: companyIds } };
 
-    // Call the base repository findAll with the updated filter
-    return super.findAll(newFilter, page, limit, sort, search);
+    // // Call the base repository findAll with the updated filter
+    // return super.findAll(newFilter, page, limit, sort, search);
   }
 }

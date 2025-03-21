@@ -22,18 +22,18 @@ export class TypeController {
     ],
   })
   async findAll(@Payload() data: any): Promise<CustomResponse> {
-    var filter :any = {
-        category: {
-          company: { 
-            id: data.body.company_id ?? data.body.auth.company_id ,
-            owner_id: data.body.owner_id
-          }
-        }
-     };
-    if (data.body.category_id &&  data.body.category_id != '') {
+    var filter: any = {
+      category: {
+        company: {
+          id: data.body.company_id ?? data.body.auth.company_id,
+          owner_id: data.body.owner_id,
+        },
+      },
+    };
+    if (data.body.category_id && data.body.category_id != '') {
       filter.category_id = data.body.category_id;
     }
-    
+
     return this.service.findAll(filter);
   }
   // UNUSED
@@ -116,5 +116,42 @@ export class TypeController {
       });
     }
     return response;
+  }
+
+  @MessagePattern({ cmd: 'put:bulk-type' })
+  @Describe({ description: 'Update bulk type', fe: ['master/category:edit'] })
+  async updateBulk(@Payload() data: any): Promise<CustomResponse> {
+    const newData = data.body.types;
+
+    // Check if updateData doesn't have id that it needed to be created first the rest will be updated
+    const createData = await newData.filter((item) => item.id == null);
+    if (createData.length > 0) {
+      const responseCreate = await this.service.bulkCreate(createData);
+      if (!responseCreate.success) {
+        responseCreate.data.forEach((item) => {
+          this.marketplaceClient.emit(
+            { service: 'marketplace', module: 'type', action: 'create' },
+            item,
+          );
+          this.transactionClient.emit({ cmd: 'type_created' }, item);
+        });
+        return responseCreate;
+      }
+    }
+
+    const updateData = await newData.filter((item) => item.id != null);
+    if (updateData.length > 0) {
+      const response = await this.service.bulkUpdate(updateData);
+      if (response.success) {
+        response.data.forEach((item) => {
+          this.marketplaceClient.emit(
+            { service: 'marketplace', module: 'type', action: 'update' },
+            item,
+          );
+          this.transactionClient.emit({ cmd: 'type_updated' }, item);
+        });
+      }
+      return response;
+    }
   }
 }

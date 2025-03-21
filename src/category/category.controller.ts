@@ -30,7 +30,7 @@ export class CategoryController {
       company: {
         owner_id: data.body.owner_id,
       },
-      company_id: data.body.auth.company_id,
+      // company_id: data.body.auth.company_id,
     };
     if (data.body.store_id) {
       filter.company.stores = {
