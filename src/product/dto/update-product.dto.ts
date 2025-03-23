@@ -4,14 +4,12 @@ export class UpdateProductRequest {
   name: string | null;
   code: string | null;
   description: string | null;
-  images: string[] | null;
   tags: string[] | null;
 
-  constructor({ name, code, description, images, tags }) {
+  constructor({ name, code, description, tags }) {
     this.name = name;
     this.code = code;
     this.description = description;
-    this.images = images;
     this.tags = tags;
   }
 
@@ -20,7 +18,6 @@ export class UpdateProductRequest {
       name: z.string().min(3).max(255).nullable().optional(),
       code: z.string().max(25).nullable().optional(),
       description: z.string().max(255).nullable().optional(),
-      images: z.array(z.string()).nullable().optional(),
       tags: z.array(z.string()).nullable().optional(),
     });
   }
