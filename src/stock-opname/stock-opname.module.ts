@@ -6,9 +6,10 @@ import { StockOpnameDetailRepository } from 'src/repositories/stock-opname-detai
 import { StockOpnameRepository } from 'src/repositories/stock-opname.repository';
 import { ProductCodeRepository } from 'src/repositories/product-code.repository';
 import { SharedModule } from 'src/shared.module';
+import { ProductModule } from 'src/product/product.module';
 
 @Module({
-  imports: [SharedModule],
+  imports: [SharedModule, ProductModule],
   controllers: [StockOpnameController],
   providers: [
     StockOpnameService,

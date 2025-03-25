@@ -101,47 +101,137 @@ export class StockOpnameService extends BaseService {
       approve_at: new Date(),
     });
 
-    const stockNotScanned = await this.stockOpnameRepository.findNotScanned(id)
+    const scanned = updateStockOpname.details;
+    // console.log('updateStockOpname', updateStockOpname)
+    // updateStockOpname {
+    //   id: 'c973fa13-9008-4d29-9016-8e5daf8feb20',
+    //   store_id: '8dedffbb-f267-490a-9feb-e1547b01fcda',
+    //   category_id: '5d8b6bbc-a105-4165-8cb1-a835ee07ae03',
+    //   date: 2025-03-26T00:00:00.000Z,
+    //   status: 1,
+    //   description: '',
+    //   approve: true,
+    //   approve_by: 'd643abb7-2944-4412-8bb5-5475679f5ade',
+    //   approve_at: 2025-03-25T06:24:05.842Z,
+    //   created_by: 'd643abb7-2944-4412-8bb5-5475679f5ade',
+    //   created_at: 2025-03-25T04:46:15.167Z,
+    //   updated_at: 2025-03-25T06:24:05.842Z,
+    //   deleted_at: null,
+    //   details: [],
+    //   store: {
+    //     id: '8dedffbb-f267-490a-9feb-e1547b01fcda',
+    //     code: 'AAA',
+    //     name: 'Cabang A',
+    //     is_active: true,
+    //     is_flex_price: false,
+    //     is_float_price: false,
+    //     tax_percentage: 11,
+    //     company_id: 'f2a8a1d7-3c4b-4e27-9b4e-6fbd3f87d92c',
+    //     created_at: 2025-03-16T13:51:40.444Z,
+    //     updated_at: 2025-03-18T04:51:09.785Z,
+    //     deleted_at: null
+    //   },
+    //   category: {
+    //     id: '5d8b6bbc-a105-4165-8cb1-a835ee07ae03',
+    //     code: 'AA001',
+    //     name: 'Cincin',
+    //     purity: '10',
+    //     metal_type: 1,
+    //     weight_tray: 12,
+    //     weight_paper: 14,
+    //     description: 'asdf',
+    //     company_id: 'f2a8a1d7-3c4b-4e27-9b4e-6fbd3f87d92c',
+    //     created_at: 2025-03-17T03:34:39.149Z,
+    //     updated_at: 2025-03-17T03:34:39.149Z,
+    //     deleted_at: null
+    //   }
+    // }
+    // {
+    //   id: 'c973fa13-9008-4d29-9016-8e5daf8feb20',
+    //   store_id: '8dedffbb-f267-490a-9feb-e1547b01fcda',
+    //   category_id: '5d8b6bbc-a105-4165-8cb1-a835ee07ae03',
+    //   date: 2025-03-26T00:00:00.000Z,
+    //   status: 1,
+    //   description: '',
+    //   approve: true,
+    //   approve_by: 'd643abb7-2944-4412-8bb5-5475679f5ade',
+    //   approve_at: 2025-03-25T06:24:05.842Z,
+    //   created_by: 'd643abb7-2944-4412-8bb5-5475679f5ade',
+    //   created_at: 2025-03-25T04:46:15.167Z,
+    //   updated_at: 2025-03-25T06:24:05.842Z,
+    //   deleted_at: null,
+    //   details: [],
+    //   store: {
+    //     id: '8dedffbb-f267-490a-9feb-e1547b01fcda',
+    //     code: 'AAA',
+    //     name: 'Cabang A',
+    //     is_active: true,
+    //     is_flex_price: false,
+    //     is_float_price: false,
+    //     tax_percentage: 11,
+    //     company_id: 'f2a8a1d7-3c4b-4e27-9b4e-6fbd3f87d92c',
+    //     created_at: 2025-03-16T13:51:40.444Z,
+    //     updated_at: 2025-03-18T04:51:09.785Z,
+    //     deleted_at: null
+    //   },
+    //   category: {
+    //     id: '5d8b6bbc-a105-4165-8cb1-a835ee07ae03',
+    //     code: 'AA001',
+    //     name: 'Cincin',
+    //     purity: '10',
+    //     metal_type: 1,
+    //     weight_tray: 12,
+    //     weight_paper: 14,
+    //     description: 'asdf',
+    //     company_id: 'f2a8a1d7-3c4b-4e27-9b4e-6fbd3f87d92c',
+    //     created_at: 2025-03-17T03:34:39.149Z,
+    //     updated_at: 2025-03-17T03:34:39.149Z,
+    //     deleted_at: null
+    //   }
+    // }
+    
+    console.log('scanned', scanned);
+    const stockNotScanned = await this.stockOpnameRepository.findNotScanned(id, scanned);
     // console.log('this is stock not scanned',stockNotScanned);
     // this is stock not scanned [
     //   {
-    //     id: 'c9172e6c-be97-4e3e-a4ac-c1d25fc7b62f',
-    //     barcode: 'AA0020100040001',
-    //     product_id: '38043fba-3b36-43d7-a7c9-0e6317916868',
-    //     weight: 12,
-    //     fixed_price: 5000,
-    //     status: 0,
-    //     taken_out_at: null,
-    //     taken_out_reason: 0,
-    //     taken_out_by: null,
-    //     buy_price: 400000,
-    //     tax_purchase: 44000,
-    //     image: 'uploads\\product\\88813eb4-bfd2-4b7b-b555-d461a986b13b.png',
-    //     account_id: 'f609be50-160a-4edd-b3ac-755ab5c5739a',
-    //     created_at: 2025-03-18T06:49:50.612Z,
-    //     updated_at: 2025-03-18T06:49:50.612Z,
+    //   id: '311d1827-5ff4-447c-9a9e-dd689471fc27',
+    //   barcode: 'AA0010100030001',
+    //   product_id: '436446a4-be6d-406b-bb15-50a7a09eff47',
+    //   weight: 0.6,
+    //   fixed_price: 100000,
+    //   status: 0,
+    //   taken_out_at: 2025-03-25T00:00:00.000Z,
+    //   taken_out_reason: 1,
+    //   taken_out_by: 'd643abb7-2944-4412-8bb5-5475679f5ade',
+    //   buy_price: 120000,
+    //   tax_purchase: 13200,
+    //   image: 'uploads\\product\\7af0061b-6928-4b22-9fa1-c33362d55a49.png',
+    //   account_id: 'f609be50-160a-4edd-b3ac-755ab5c5739a',
+    //   created_at: 2025-03-18T06:43:46.930Z,
+    //   updated_at: 2025-03-25T01:52:16.603Z,
+    //   deleted_at: null,
+    //   product: {
+    //     id: '436446a4-be6d-406b-bb15-50a7a09eff47',
+    //     code: 'AA001010003',
+    //     name: 'BUBU',
+    //     description: 'asdf',
+    //     status: 1,
+    //     tags: [],
+    //     type_id: '81b1af2f-9a6a-41c0-806c-012fd002310f',
+    //     store_id: '8dedffbb-f267-490a-9feb-e1547b01fcda',
+    //     created_at: 2025-03-18T06:42:33.941Z,
+    //     updated_at: 2025-03-18T06:42:33.941Z,
     //     deleted_at: null,
-    //     product: {
-    //       id: '38043fba-3b36-43d7-a7c9-0e6317916868',
-    //       code: 'AA002010004',
-    //       name: 'Putih',
-    //       description: 'asdf',
-    //       images: [Array],
-    //       status: 1,
-    //       tags: [],
-    //       type_id: '19d5aba0-b8ff-4091-b0a8-a34d837a653a',
-    //       store_id: '8dedffbb-f267-490a-9feb-e1547b01fcda',
-    //       created_at: 2025-03-18T06:49:01.709Z,
-    //       updated_at: 2025-03-18T06:49:01.709Z,
-    //       deleted_at: null,
-    //       type: [Object]
-    //     }
+    //     type: [Object],
+    //     store: [Object]
     //   }
+    // }
     // ]
     
 
     if (stockNotScanned.length > 0) {
-      this.financeClient.emit({ cmd: 'stock_opname_approved' }, {stockNotScanned, trans_date: new Date()});
+      this.financeClient.emit({ cmd: 'stock_opname_approved' }, {stockNotScanned, id: updateStockOpname.id, trans_date: new Date()});
     }
 
     return CustomResponse.success(
@@ -165,6 +255,9 @@ export class StockOpnameService extends BaseService {
       approve_by: disapprove_by,
       approve_at: new Date(),
     });
+    const scanned = updateStockOpname.details;
+    const stockNotScanned = await this.stockOpnameRepository.findNotScanned(id, scanned);
+    this.financeClient.emit({ cmd: 'stock_opname_disapproved' },{stockNotScanned, id})
 
     return CustomResponse.success(
       'Successfully dissaprove stock opname',
