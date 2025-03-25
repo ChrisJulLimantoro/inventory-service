@@ -343,9 +343,9 @@ export class ProductService extends BaseService {
           );
         }
         // TODOCEJE UPDATE STATUS
-        // await this.productCodeRepository.update(id, {
-        //   status: 0,
-        // });
+        await this.productCodeRepository.update(id, {
+          status: 0,
+        });
         // Add stock mutation (ELLA)
         this.financeClient.emit({ cmd: 'stock_repaired' }, { productCode: code, trans_date: new Date(), account_id, weight, expense });
       });
