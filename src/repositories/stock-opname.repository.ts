@@ -1,10 +1,14 @@
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Injectable } from '@nestjs/common';
 import { BaseRepository } from 'src/repositories/base.repository';
+import { ProductService } from 'src/product/product.service';
 
 @Injectable()
 export class StockOpnameRepository extends BaseRepository<any> {
-  constructor(prisma: PrismaService) {
+  constructor(
+    prisma: PrismaService,
+    private readonly productService: ProductService
+  ) {
     const relations = {
       details: {
         include: {
@@ -17,34 +21,21 @@ export class StockOpnameRepository extends BaseRepository<any> {
     super(prisma, 'stockOpname', relations, true);
   }
 
-  async findNotScanned(stockOpnameId: string) {
-    const stockOpname = await this.findOne(stockOpnameId);
-    console.log(stockOpname);
-    const result = await this.prisma.productCode.findMany({
-      where: {
-        StockOpnameDetails: {
-          none: {} // Menggunakan `none` agar hanya mengambil yang tidak ada di stock_opname_details
-        },
+  async findNotScanned(id: any, scanned: any) {
+      const stockOpname = await this.findOne(id);
+      const reformatScanned = scanned.map((scan) => scan.product_code_id);
+      const AllProductCode = await this.productService.getAllProductCode({
         product: {
+          store_id: stockOpname.store_id,
           type: {
-            category_id: stockOpname.category_id
-          }
-        }
-      },
-      include: {
-        product: {
-          include: {
-            type: {
-              include: {
-                category: true
-              }
-            }, // Mengambil informasi tipe produk,
-            store: true, // Mengambil informasi toko
-          }
-        }
-      }
-    });
+            category_id: stockOpname.category_id,
+          },
+        },
+      }).then((res) => res.data.data);
+      const result = AllProductCode.filter(
+        (productCode) => !reformatScanned.includes(productCode.id)
+      );
 
-    return result;
+      return result;
   }
 }

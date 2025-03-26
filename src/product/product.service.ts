@@ -130,6 +130,7 @@ export class ProductService extends BaseService {
         weight: code.weight,
         type: `${code.product.type.code} - ${code.product.type.category.name}`,
         status: code.status,
+        buy_price: code.buy_price,
       };
     });
     console.log(data);
@@ -325,6 +326,7 @@ export class ProductService extends BaseService {
       weight: code.weight,
       type: `${code.product.type.code} - ${code.product.type.category.name}`,
       status: code.status,
+      buy_price: code.buy_price,
     };
     return CustomResponse.success('Product code retrieved!', data, 200);
   }
@@ -343,9 +345,10 @@ export class ProductService extends BaseService {
           );
         }
         // TODOCEJE UPDATE STATUS
-        // await this.productCodeRepository.update(id, {
-        //   status: 0,
-        // });
+        await this.productCodeRepository.update(id, {
+          status: 0,
+          weight: weight,
+        });
         // Add stock mutation (ELLA)
         this.financeClient.emit({ cmd: 'stock_repaired' }, { productCode: code, trans_date: new Date(), account_id, weight, expense });
       });

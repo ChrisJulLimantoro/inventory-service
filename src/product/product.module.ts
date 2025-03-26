@@ -16,5 +16,8 @@ import { QrModule } from 'src/qr/qr.module';
     ProductCodeRepository,
     PrismaService,
   ],
+  exports: [
+    ProductService,
+  ]
 })
 export class ProductModule {}
