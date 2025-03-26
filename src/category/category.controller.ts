@@ -119,8 +119,9 @@ export class CategoryController {
     description: 'Get all category price',
     fe: ['master/price:open'],
   })
-  async findAllPriceCategory(): Promise<CustomResponse> {
-    return this.service.findAllPriceCategory();
+  async findAllPriceCategory(@Payload() data: any): Promise<CustomResponse> {
+    const store_id = data.body.auth.store_id;
+    return this.service.findAllPriceCategory(store_id);
   }
 
   @MessagePattern({ cmd: 'get:price-category-detail' })

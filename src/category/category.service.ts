@@ -40,7 +40,7 @@ export class CategoryService extends BaseService {
     return super.create(data);
   }
 
-  async findAllPriceCategory(): Promise<CustomResponse> {
+  async findAllPriceCategory(store_id: string): Promise<CustomResponse> {
     const categories = await this.prisma.category.findMany({
       include: {
         types: {
@@ -67,6 +67,13 @@ export class CategoryService extends BaseService {
       },
       where: {
         deleted_at: null,
+        company: {
+          stores: {
+            some: {
+              id: store_id,
+            },
+          },
+        },
       },
     });
 
