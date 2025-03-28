@@ -164,6 +164,8 @@ export class ProductController {
         { module: 'product', action: 'generateProductCode' },
         response.data,
       );
+      response.data.transref_id = body.transref_id;
+      console.log('generate product inventory', response.data);
       this.transactionClient.emit(
         { cmd: 'product_code_generated' },
         response.data,
