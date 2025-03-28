@@ -162,7 +162,14 @@ export class ProductService extends BaseService {
             taken_out_by: params.user.id,
           });
           // Add stock mutation (ELLA)
-          this.financeClient.emit({ cmd: 'stock_out' }, { productCode: code, reason: Number(taken_out_reason), trans_date: new Date(date) });
+          this.financeClient.emit(
+            { cmd: 'stock_out' },
+            {
+              productCode: code,
+              reason: Number(taken_out_reason),
+              trans_date: new Date(date),
+            },
+          );
         }
       });
     } catch (e) {
@@ -316,6 +323,9 @@ export class ProductService extends BaseService {
     if (!store) {
       throw new Error('Store not found');
     }
+    if (store.id !== code.product.store_id) {
+      throw new Error('Product code not found in this store');
+    }
     const data = {
       id: code.id,
       barcode: code.barcode,
@@ -332,7 +342,7 @@ export class ProductService extends BaseService {
   }
 
   async productCodeRepaired(data: Record<string, any>) {
-    const { auth, owner_id, weight, expense, id , params, account_id } = data;
+    const { auth, owner_id, weight, expense, id, params, account_id } = data;
     try {
       await this.prisma.$transaction(async (prisma) => {
         const code = await this.productCodeRepository.findOne(id);
@@ -340,17 +350,37 @@ export class ProductService extends BaseService {
           throw new Error(`Product code ${id} is invalid`); // item.id, because code is undefined
         }
         if (code.product.store_id !== auth.store_id) {
-          throw new Error(
-            `Product code ${code.barcode} is not in this store`,
-          );
+          throw new Error(`Product code ${code.barcode} is not in this store`);
         }
         // TODOCEJE UPDATE STATUS
         await this.productCodeRepository.update(id, {
           status: 0,
           weight: weight,
         });
+        // To Transaction
+        this.transactionClient.emit(
+          { cmd: 'product_code_updated' },
+          {
+            id: code.id,
+            barcode: code.barcode,
+            product_id: code.product_id,
+            status: 0,
+            weight: code.weight,
+            fixed_price: code.fixed_price,
+            taken_out_at: null,
+          },
+        );
         // Add stock mutation (ELLA)
-        this.financeClient.emit({ cmd: 'stock_repaired' }, { productCode: code, trans_date: new Date(), account_id, weight, expense });
+        this.financeClient.emit(
+          { cmd: 'stock_repaired' },
+          {
+            productCode: code,
+            trans_date: new Date(),
+            account_id,
+            weight,
+            expense,
+          },
+        );
       });
     } catch (e) {
       console.error(e.message);
@@ -388,5 +418,39 @@ export class ProductService extends BaseService {
     // );
 
     return CustomResponse.success('Product code out!', null, 200);
+  }
+
+  async checkProduct(barcode: string) {
+    const code = await this.productCodeRepository.getProductCode(barcode);
+    if (!code) {
+      throw new Error('Product code not found');
+    }
+    // Get price information
+    const store = await this.prisma.store.findUnique({
+      where: {
+        id: code.product.store_id,
+        deleted_at: null,
+        is_active: true,
+      },
+      select: {
+        id: true,
+        is_active: true,
+        is_flex_price: true,
+        is_float_price: true,
+      },
+    });
+    if (!store) {
+      throw new Error('Store not found');
+    }
+
+    const data = {
+      ...code,
+      price: store.is_float_price
+        ? code.product.type.prices[0].price
+        : code.fixed_price,
+    };
+
+    // Only public information [i Think ???]
+    return CustomResponse.success('Product code retrieved!', data, 200);
   }
 }
