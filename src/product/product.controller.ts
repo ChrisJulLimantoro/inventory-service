@@ -174,6 +174,23 @@ export class ProductController {
     return response;
   }
 
+  @MessagePattern({ cmd: 'get:check-product/*' })
+  @Describe({
+    description: 'Check product code',
+    fe: ['inventory/check-product:all'],
+  })
+  async checkProductCode(@Payload() data: any): Promise<CustomResponse> {
+    const param = data.params;
+    const body = data.body;
+    const filter = {
+      product: {
+        store_id: body.store_id,
+      },
+    };
+    const response = await this.service.checkProduct(param.id);
+    return response;
+  }
+
   @MessagePattern({ cmd: 'delete:product-code/*' })
   @Describe({
     description: 'Delete product code',
@@ -191,10 +208,7 @@ export class ProductController {
         { module: 'product', action: 'deleteProductCode' },
         { id: param.id },
       );
-      this.financeClient.emit(
-        { cmd: 'product_code_deleted' },
-        response,
-      );
+      this.financeClient.emit({ cmd: 'product_code_deleted' }, response);
     }
     return response;
   }
