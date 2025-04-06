@@ -10,6 +10,7 @@ export class OperationController {
     private readonly service: OperationService,
     @Inject('TRANSACTION') private readonly transactionClient: ClientProxy,
     @Inject('MARKETPLACE') private readonly marketplaceClient: ClientProxy,
+    @Inject('FINANCE') private readonly financeClient: ClientProxy,
   ) {}
 
   @MessagePattern({ cmd: 'get:operation' })
@@ -52,6 +53,7 @@ export class OperationController {
     if (response.success) {
       this.transactionClient.emit({ cmd: 'operation_created' }, response.data);
       this.marketplaceClient.emit({ cmd: 'operation_created' }, response.data);
+      this.financeClient.emit({ cmd: 'operation_created' }, response.data);
     }
     return response;
   }
@@ -68,6 +70,7 @@ export class OperationController {
     if (response.success) {
       this.transactionClient.emit({ cmd: 'operation_updated' }, response.data);
       this.marketplaceClient.emit({ cmd: 'operation_updated' }, response.data);
+      this.financeClient.emit({ cmd: 'operation_updated' }, response.data);
     }
     return response;
   }
@@ -89,6 +92,7 @@ export class OperationController {
         { cmd: 'operation_deleted' },
         response.data.id,
       );
+      this.financeClient.emit({ cmd: 'operation_deleted' }, response.data.id);
     }
     return response;
   }
