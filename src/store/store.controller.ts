@@ -1,43 +1,17 @@
-import { Controller, Inject } from '@nestjs/common';
+import { Controller } from '@nestjs/common';
 import { StoreService } from './store.service';
-import {
-  ClientProxy,
-  Ctx,
-  EventPattern,
-  Payload,
-  RmqContext,
-} from '@nestjs/microservices';
+import { Ctx, EventPattern, Payload, RmqContext } from '@nestjs/microservices';
 import { Exempt } from 'src/decorator/exempt.decorator';
+import { RmqAckHelper } from 'src/helper/rmq-ack.helper';
 
 @Controller('store')
 export class StoreController {
   constructor(private readonly service: StoreService) {}
 
-  private async handleEvent(
-    context: RmqContext,
-    callback: () => Promise<{ success: boolean }>,
-    errorMessage: string,
-  ) {
-    const channel = context.getChannelRef();
-    const originalMsg = context.getMessage();
-
-    try {
-      const response = await callback();
-      if (response.success) {
-        channel.ack(originalMsg);
-      }
-    } catch (error) {
-      console.error(errorMessage, error.stack);
-      channel.nack(originalMsg);
-    }
-  }
-
   @EventPattern({ cmd: 'store_created' })
   @Exempt()
   async storeCreated(@Payload() data: any, @Ctx() context: RmqContext) {
     console.log('Store created emit received', data);
-    const channel = context.getChannelRef();
-    const originalMsg = context.getMessage();
 
     const sanitizedData = {
       ...data,
@@ -46,63 +20,60 @@ export class StoreController {
       deleted_at: data.deleted_at ? new Date(data.deleted_at) : null,
     };
 
-    try {
-      const response = await this.service.create(sanitizedData);
-      if (response.success) {
-        channel.ack(originalMsg);
-      }
-    } catch (error) {
-      console.error('Error processing store_created event', error.stack);
-      channel.nack(originalMsg);
-      // Optional: Send the error message to a DLQ (Dead Letter Queue) or retry queue
-    }
+    await RmqAckHelper.handleMessageProcessing(
+      context,
+      () => this.service.create(sanitizedData),
+      {
+        queueName: 'store_created',
+        useDLQ: true,
+        dlqRoutingKey: 'dlq.store_created',
+      },
+    )();
+  }
+
+  @EventPattern({ cmd: 'store_updated' })
+  @Exempt()
+  async storeUpdated(@Payload() data: any, @Ctx() context: RmqContext) {
+    console.log('Store updated emit received', data);
+
+    await RmqAckHelper.handleMessageProcessing(
+      context,
+      () => this.service.update(data.id, data),
+      {
+        queueName: 'store_updated',
+        useDLQ: true,
+        dlqRoutingKey: 'dlq.store_updated',
+      },
+    )();
   }
 
   @EventPattern({ cmd: 'store_deleted' })
   @Exempt()
   async storeDeleted(@Payload() data: any, @Ctx() context: RmqContext) {
     console.log('Store deleted emit received', data);
-    const channel = context.getChannelRef();
-    const originalMsg = context.getMessage();
 
-    try {
-      const response = await this.service.delete(data);
-      if (response.success) {
-        channel.ack(originalMsg);
-      }
-    } catch (error) {
-      console.error('Error processing store_deleted event', error.stack);
-      channel.nack(originalMsg);
-      // Optional: Send the error message to a DLQ (Dead Letter Queue) or retry queue
-    }
-  }
-
-  @EventPattern({ cmd: 'store_updated' })
-  @Exempt()
-  async storeUpdated(@Payload() data: any, @Ctx() context: RmqContext) {
-    console.log('Store Updated emit received', data);
-    const channel = context.getChannelRef();
-    const originalMsg = context.getMessage();
-
-    try {
-      const response = await this.service.update(data.id, data);
-      if (response.success) {
-        channel.ack(originalMsg);
-      }
-    } catch (error) {
-      console.error('Error processing store_updated event', error.stack);
-      channel.nack(originalMsg);
-      // Optional: Send the error message to a DLQ (Dead Letter Queue) or retry queue
-    }
+    await RmqAckHelper.handleMessageProcessing(
+      context,
+      () => this.service.delete(data),
+      {
+        queueName: 'store_deleted',
+        useDLQ: true,
+        dlqRoutingKey: 'dlq.store_deleted',
+      },
+    )();
   }
 
   @EventPattern({ cmd: 'store_sync' })
   @Exempt()
   async storeSync(@Payload() data: any, @Ctx() context: RmqContext) {
-    await this.handleEvent(
+    await RmqAckHelper.handleMessageProcessing(
       context,
       () => this.service.sync(data),
-      'Error processing store_sync event',
-    );
+      {
+        queueName: 'store_sync',
+        useDLQ: true,
+        dlqRoutingKey: 'dlq.store_sync',
+      },
+    )();
   }
 }
