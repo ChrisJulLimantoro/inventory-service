@@ -120,8 +120,14 @@ export class CategoryController {
     fe: ['master/price:open'],
   })
   async findAllPriceCategory(@Payload() data: any): Promise<CustomResponse> {
+    // Filters
     const store_id = data.body.auth.store_id;
-    return this.service.findAllPriceCategory(store_id);
+    const category_id = data.body.category_id;
+    const date = {
+      start: data.body.dateStart,
+      end: data.body.dateEnd,
+    };
+    return this.service.findAllPriceCategory(store_id, category_id, date);
   }
 
   @MessagePattern({ cmd: 'get:price-category-detail' })

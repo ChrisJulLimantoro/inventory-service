@@ -40,7 +40,13 @@ export class CategoryService extends BaseService {
     return super.create(data);
   }
 
-  async findAllPriceCategory(store_id: string): Promise<CustomResponse> {
+  async findAllPriceCategory(
+    store_id: string,
+    category_id: string,
+    date?: { start: string; end: string },
+  ): Promise<CustomResponse> {
+    const startDate = date?.start ? new Date(date.start) : new Date(0); // epoch start
+    const endDate = date?.end ? new Date(date.end) : new Date(); // now
     const categories = await this.prisma.category.findMany({
       include: {
         types: {
@@ -54,6 +60,10 @@ export class CategoryService extends BaseService {
             prices: {
               where: {
                 deleted_at: null,
+                date: {
+                  gte: startDate,
+                  lte: endDate,
+                },
               },
               orderBy: {
                 created_at: 'desc',
@@ -74,6 +84,7 @@ export class CategoryService extends BaseService {
             },
           },
         },
+        id: category_id,
       },
     });
 

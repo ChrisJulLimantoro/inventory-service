@@ -210,7 +210,10 @@ export class ProductController {
         { module: 'product', action: 'deleteProductCode' },
         { id: param.id },
       );
-      this.transactionClient.emit({ cmd: 'product_code_deleted' }, {id: param.id});
+      this.transactionClient.emit(
+        { cmd: 'product_code_deleted' },
+        { id: param.id },
+      );
       this.financeClient.emit({ cmd: 'product_code_deleted' }, response);
     }
     return response;
@@ -237,6 +240,14 @@ export class ProductController {
       status: 3,
       product: {
         store_id: data.body.auth.store_id,
+        type: {
+          category_id: data.body.category_id,
+        },
+      },
+      date: {
+        start: data.body.dateStart,
+        end: data.body.dateEnd,
+        field: 'taken_out_at',
       },
     };
     const store_id = data.body.auth.store_id;

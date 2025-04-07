@@ -50,6 +50,25 @@ export class BaseRepository<T> {
         }
       : {};
 
+    // Prepare dynamic date filter (assumes the column is named 'date')
+    let dateFilter = {};
+    if (filter?.date?.start || filter?.date?.end) {
+      const dateField = filter.date.field || 'date';
+      const startDate = filter.date.start
+        ? new Date(filter.date.start)
+        : new Date(0);
+      const endDate = filter.date.end ? new Date(filter.date.end) : new Date();
+
+      dateFilter = {
+        [dateField]: {
+          gte: startDate,
+          lte: endDate,
+        },
+      };
+      // Remove the `date` key from filter so it doesn't get included again below
+    }
+    delete filter.date;
+
     // Ensure correct WHERE structure: deleted_at IS NULL AND (OR conditions)
     const whereConditions = {
       AND: {
@@ -58,10 +77,9 @@ export class BaseRepository<T> {
           : { NOT: { deleted_at: null } }),
         ...searchConditions,
         ...filter,
+        ...dateFilter,
       },
     };
-
-    // console.log(whereConditions, whereConditions["AND"]["OR"]);
 
     // Apply sorting
     const orderBy = sort
@@ -188,8 +206,8 @@ export class BaseRepository<T> {
           where: { id: d.id },
           update: d,
           create: d,
-        })
-      )
+        }),
+      ),
     );
     return datas;
   }

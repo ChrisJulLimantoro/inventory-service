@@ -16,6 +16,11 @@ export class StockOpnameController {
   async findAll(@Payload() data: any): Promise<CustomResponse> {
     var filter: any = {
       store_id: data.body.auth.store_id,
+      category_id: data.body.category_id,
+      date: {
+        start: data.body.dateStart,
+        end: data.body.dateEnd,
+      },
     };
     const { page, limit, sort, search } = data.body;
 
