@@ -40,8 +40,9 @@ export class CategoryController {
             : data.body.auth.store_id,
       },
     };
+    const { page, limit, sort, search } = data.body;
 
-    return this.service.findAll(filter);
+    return this.service.findAll(filter, page, limit, sort, search);
   }
 
   @MessagePattern({ cmd: 'get:category/*' })

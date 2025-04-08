@@ -49,8 +49,7 @@ export class ProductController {
       filter.store = { id: data.body.store_id };
     }
 
-    console.log('filterProduct', filter);
-    return this.service.findAll(filter, page, limit, sort);
+    return this.service.findAll(filter, page, limit, sort, search);
   }
 
   @MessagePattern({ cmd: 'get:product/*' })
@@ -251,8 +250,15 @@ export class ProductController {
       },
     };
     const store_id = data.body.auth.store_id;
-    const { page, limit, sort } = data.body;
-    return this.service.getProductCodeOut(filter, store_id, page, limit);
+    const { page, limit, sort, search } = data.body;
+    return this.service.getProductCodeOut(
+      filter,
+      store_id,
+      page,
+      limit,
+      sort,
+      search,
+    );
   }
 
   @MessagePattern({ cmd: 'post:stock-out' })

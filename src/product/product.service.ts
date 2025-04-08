@@ -97,6 +97,8 @@ export class ProductService extends BaseService {
     store_id?: string,
     page?: number,
     limit?: number,
+    sort?: Record<string, any>,
+    search?: string,
   ) {
     filter = filter || {};
     filter.status = 3;
@@ -127,7 +129,10 @@ export class ProductService extends BaseService {
       filter,
       page,
       limit,
+      sort,
+      search,
     );
+    console.log(filter, page, limit, sort, search);
     console.log(codes);
     const data = codes.map((code) => {
       return {
@@ -145,7 +150,6 @@ export class ProductService extends BaseService {
         buy_price: code.buy_price,
       };
     });
-    console.log(data);
     return CustomResponse.success('Product codes retrieved!', data, 200);
   }
 
