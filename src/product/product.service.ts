@@ -52,6 +52,18 @@ export class ProductService extends BaseService {
     return super.create(data);
   }
 
+  async delete(id: string): Promise<CustomResponse> {
+    const product = await this.productRepository.findOne(id);
+    if (!product) {
+      throw new Error('Product not found');
+    }
+    if (product.product_codes.some((code) => code.status > 0)) {
+      throw new Error('There are some product codes still active!');
+    }
+
+    return super.delete(id);
+  }
+
   async getProductCodes(product_id: any) {
     const codes = await this.productCodeRepository.findAll({
       product_id: product_id,
@@ -292,6 +304,11 @@ export class ProductService extends BaseService {
     const code = await this.productCodeRepository.findOne(id);
     if (!code) {
       throw new Error('Product code not found');
+    }
+    if ([1, 2].includes(code.status)) {
+      throw new Error('Product code still active in transaction!');
+    } else if (code.status === 3) {
+      throw new Error('Product code still taken out!');
     }
     await this.productCodeRepository.delete(id);
     return CustomResponse.success('Product code deleted!', code, 200);
