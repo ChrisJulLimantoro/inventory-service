@@ -141,4 +141,17 @@ export class TypeService extends BaseService {
     const count = await this.typeRepository.count({ category_id });
     return (count + 1 + index).toString().padStart(2, '0');
   }
+
+  async delete(id: string): Promise<CustomResponse> {
+    const type = await this.typeRepository.findOne(id);
+    if (!type) {
+      throw new Error('Type not found');
+    }
+    if (type.products.length > 0) {
+      throw new Error(
+        'Cannot delete type with associated products. Please remove the products first.',
+      );
+    }
+    return super.delete(id);
+  }
 }

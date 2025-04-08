@@ -40,6 +40,19 @@ export class CategoryService extends BaseService {
     return super.create(data);
   }
 
+  async delete(id: string): Promise<CustomResponse> {
+    const category = await this.repository.findOne(id);
+    if (!category) {
+      throw new Error('Category not found');
+    }
+    if (category.types.some((type) => type.products.length > 0)) {
+      throw new Error(
+        'Cannot delete category with existing products, delete products first',
+      );
+    }
+    return super.delete(id);
+  }
+
   async findAllPriceCategory(
     store_id: string,
     category_id: string,
