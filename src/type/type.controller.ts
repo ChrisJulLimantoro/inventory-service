@@ -127,7 +127,7 @@ export class TypeController {
     const createData = await newData.filter((item) => item.id == null);
     if (createData.length > 0) {
       const responseCreate = await this.service.bulkCreate(createData);
-      if (!responseCreate.success) {
+      if (responseCreate.success) {
         responseCreate.data.forEach((item) => {
           this.marketplaceClient.emit(
             { service: 'marketplace', module: 'type', action: 'create' },
