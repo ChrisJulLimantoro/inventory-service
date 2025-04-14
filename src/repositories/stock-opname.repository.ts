@@ -31,6 +31,9 @@ export class StockOpnameRepository extends BaseRepository<any> {
             category_id: stockOpname.category_id,
           },
         },
+        status: {
+          in: [0,2]
+        }
       }).then((res) => res.data.data);
       const result = AllProductCode.filter(
         (productCode) => !reformatScanned.includes(productCode.id)

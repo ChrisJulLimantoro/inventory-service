@@ -204,7 +204,7 @@ export class StockOpnameService extends BaseService {
     const stockNotScanned = await this.stockOpnameRepository.findNotScanned(
       id,
       scanned,
-    );
+    ); // and status is in stock or bought back
     // console.log('this is stock not scanned',stockNotScanned);
     // this is stock not scanned [
     //   {
