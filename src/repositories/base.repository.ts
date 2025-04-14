@@ -12,11 +12,13 @@ export class BaseRepository<T> {
   ) {}
 
   // Create a new record with possible relations
-  async create(data: any): Promise<T> {
-    return this.prisma[this.modelName].create({
+  async create(data: any, user_id?: string): Promise<T> {
+    const created = await this.prisma[this.modelName].create({
       data,
       include: this.relations,
     });
+    await this.actionLog(this.modelName, created.id, 'CREATE', null, user_id);
+    return created;
   }
 
   // Get all records with possible relations and filter criteria
@@ -136,17 +138,23 @@ export class BaseRepository<T> {
   }
 
   // Update a record with possible relations
-  async update(id: string, data: any): Promise<T> {
+  async update(id: string, data: any, user_id?: string): Promise<T> {
+    const before = await this.prisma[this.modelName].findFirst({
+      where: this.isSoftDelete ? { id, deleted_at: null } : { id },
+    });
     data.updated_at = new Date();
-    return this.prisma[this.modelName].update({
+    const updated = await this.prisma[this.modelName].update({
       where: this.isSoftDelete ? { id, deleted_at: null } : { id },
       data,
-      include: this.relations,
     });
+    const diff = this.getDiff(before, updated);
+    await this.actionLog(this.modelName, id, 'UPDATE', diff, user_id);
+    return updated;
   }
 
   // Delete a record by ID
-  async delete(id: string): Promise<T> {
+  async delete(id: string, user_id?: string): Promise<T> {
+    await this.actionLog(this.modelName, id, 'DELETE', null, user_id);
     if (this.isSoftDelete) {
       return this.prisma[this.modelName].update({
         where: { id },
@@ -158,25 +166,37 @@ export class BaseRepository<T> {
     });
   }
 
-  async deleteWhere(filter: Record<string, any>): Promise<number> {
+  async deleteWhere(
+    filter: Record<string, any>,
+    user_id?: string,
+  ): Promise<number> {
     if (filter.length === 0) {
       throw new Error('Filter cannot be empty');
     }
+
     if (this.isSoftDelete) {
       filter.deleted_at = null;
-      return this.prisma[this.modelName].updateMany({
+      const updated = await this.prisma[this.modelName].updateManyAndReturn({
         where: filter,
         data: { deleted_at: new Date(), updated_at: new Date() },
       });
+      for (const item of updated) {
+        this.actionLog(this.modelName, item.id, 'DELETE', null, user_id);
+      }
+      return updated;
     }
-
-    return this.prisma[this.modelName].deleteMany({
+    const deleted = await this.prisma[this.modelName].deleteManyAndReturn({
       where: filter,
     });
+    for (const item of deleted) {
+      this.actionLog(this.modelName, item.id, 'DELETE', null, user_id);
+    }
+    return deleted;
   }
 
   // Restore a soft deleted record
-  async restore(id: string): Promise<T> {
+  async restore(id: string, user_id?: string): Promise<T> {
+    await this.actionLog(this.modelName, id, 'RESTORE', null, user_id);
     return this.prisma[this.modelName].update({
       where: { id },
       data: { deleted_at: null, updated_at: new Date() },
@@ -213,5 +233,41 @@ export class BaseRepository<T> {
       ),
     );
     return datas;
+  }
+
+  // Add logging
+  getDiff(
+    before: Record<string, any>,
+    after: Record<string, any>,
+    excludeKeys: string[] = ['id', 'updatedAt'],
+  ) {
+    const diff: Record<string, { from: any; to: any }> = {};
+    for (const key in after) {
+      if (excludeKeys.includes(key)) continue;
+      if (before[key] !== after[key]) {
+        diff[key] = { from: before[key], to: after[key] };
+      }
+    }
+    return diff;
+  }
+
+  async actionLog(
+    resource: string,
+    resource_id: string,
+    event: string,
+    diff: any,
+    user_id: string,
+  ) {
+    const log = {
+      resource,
+      resource_id,
+      event,
+      diff: JSON.stringify(diff),
+      user_id,
+    };
+
+    return this.prisma.actionLog.create({
+      data: log,
+    });
   }
 }

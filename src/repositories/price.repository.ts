@@ -11,7 +11,7 @@ export class PriceRepository extends BaseRepository<any> {
     super(prisma, 'price', relations, true); // 'role' is the Prisma model name
   }
 
-  async bulkDelete(category_id: string, date: string) {
+  async bulkDelete(category_id: string, date: string, user_id?: string) {
     const recordsToDelete = await this.prisma.price.findMany({
       where: {
         type: {
@@ -33,6 +33,11 @@ export class PriceRepository extends BaseRepository<any> {
         date: new Date(date),
       },
     });
+
+    // log the deletion action
+    for (const record of recordsToDelete) {
+      await this.actionLog('price', record.id, 'DELETE', null, user_id);
+    }
 
     return {
       message: `${recordsToDelete.length} Records deleted successfully`,

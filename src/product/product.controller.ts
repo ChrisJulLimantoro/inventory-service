@@ -69,9 +69,7 @@ export class ProductController {
   })
   async create(@Payload() data: any): Promise<CustomResponse> {
     const createData = data.body;
-    console.log(data.params);
-    createData.owner_id = 'data.params.user.id';
-    const response = await this.service.create(createData);
+    const response = await this.service.create(createData, data.params.user.id);
     if (response.success) {
       this.marketplaceClient.emit(
         { module: 'product', action: 'createProduct' },
@@ -87,7 +85,7 @@ export class ProductController {
   async update(@Payload() data: any): Promise<CustomResponse> {
     const param = data.params;
     const body = data.body;
-    const response = await this.service.update(param.id, body);
+    const response = await this.service.update(param.id, body, param.user.id);
     if (response.success) {
       this.marketplaceClient.emit(
         { module: 'product', action: 'updateProduct' },
@@ -102,7 +100,7 @@ export class ProductController {
   @Describe({ description: 'Delete product', fe: ['inventory/product:delete'] })
   async delete(@Payload() data: any): Promise<CustomResponse> {
     const param = data.params;
-    const response = await this.service.delete(param.id);
+    const response = await this.service.delete(param.id, param.user.id);
     if (response.success) {
       this.marketplaceClient.emit(
         { module: 'product', action: 'deleteProduct' },
@@ -157,7 +155,11 @@ export class ProductController {
   async generateProductCode(@Payload() data: any): Promise<CustomResponse> {
     const param = data.params;
     const body = data.body;
-    const response = await this.service.generateProductCode(param.id, body);
+    const response = await this.service.generateProductCode(
+      param.id,
+      body,
+      param.user.id,
+    );
     if (response.success) {
       this.marketplaceClient.emit(
         { module: 'product', action: 'generateProductCode' },
@@ -203,7 +205,10 @@ export class ProductController {
   })
   async deleteProductCode(@Payload() data: any): Promise<CustomResponse> {
     const param = data.params;
-    const response = await this.service.deleteProductCode(param.id);
+    const response = await this.service.deleteProductCode(
+      param.id,
+      param.user.id,
+    );
     if (response) {
       this.marketplaceClient.emit(
         { module: 'product', action: 'deleteProductCode' },
@@ -268,7 +273,10 @@ export class ProductController {
   })
   async productCodeOut(@Payload() data: any): Promise<CustomResponse> {
     data.body = { ...data.body, params: data.params };
-    const res = await this.service.productCodeOut(data.body);
+    const res = await this.service.productCodeOut(
+      data.body,
+      data.params.user.id,
+    );
     console.log(res);
     return res;
   }
@@ -280,7 +288,10 @@ export class ProductController {
   })
   async productCodeRepaired(@Payload() data: any): Promise<CustomResponse> {
     data.body = { ...data.body, params: data.params };
-    const res = await this.service.productCodeRepaired(data.body);
+    const res = await this.service.productCodeRepaired(
+      data.body,
+      data.params.user.id,
+    );
     console.log(res);
     return res;
   }

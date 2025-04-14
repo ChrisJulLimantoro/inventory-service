@@ -52,7 +52,7 @@ export class TypeController {
   async create(@Payload() data: any): Promise<CustomResponse> {
     const createData = data.body;
 
-    const response = await this.service.create(createData);
+    const response = await this.service.create(createData, data.params.user.id);
     if (response.success) {
       this.marketplaceClient.emit(
         { service: 'marketplace', module: 'type', action: 'create' },
@@ -71,7 +71,7 @@ export class TypeController {
   async update(@Payload() data: any): Promise<CustomResponse> {
     const param = data.params;
     const body = data.body;
-    const response = await this.service.update(param.id, body);
+    const response = await this.service.update(param.id, body, param.user.id);
     if (response.success) {
       this.marketplaceClient.emit(
         { service: 'marketplace', module: 'type', action: 'update' },
@@ -89,7 +89,7 @@ export class TypeController {
   })
   async delete(@Payload() data: any): Promise<CustomResponse> {
     const param = data.params;
-    const response = await this.service.delete(param.id);
+    const response = await this.service.delete(param.id, param.user.id);
     if (response.success) {
       this.marketplaceClient.emit(
         { service: 'marketplace', module: 'type', action: 'softdelete' },
@@ -105,7 +105,10 @@ export class TypeController {
   async createBulk(@Payload() data: any): Promise<CustomResponse> {
     const createData = data.body.types;
 
-    const response = await this.service.bulkCreate(createData);
+    const response = await this.service.bulkCreate(
+      createData,
+      data.params.user.id,
+    );
     if (response.success) {
       response.data.forEach((item) => {
         this.marketplaceClient.emit(
@@ -126,7 +129,10 @@ export class TypeController {
     // Check if updateData doesn't have id that it needed to be created first the rest will be updated
     const createData = await newData.filter((item) => item.id == null);
     if (createData.length > 0) {
-      const responseCreate = await this.service.bulkCreate(createData);
+      const responseCreate = await this.service.bulkCreate(
+        createData,
+        data.params.user.id,
+      );
       if (!responseCreate.success) {
         responseCreate.data.forEach((item) => {
           this.marketplaceClient.emit(
@@ -141,7 +147,10 @@ export class TypeController {
 
     const updateData = await newData.filter((item) => item.id != null);
     if (updateData.length > 0) {
-      const response = await this.service.bulkUpdate(updateData);
+      const response = await this.service.bulkUpdate(
+        updateData,
+        data.params.user.id,
+      );
       if (response.success) {
         response.data.forEach((item) => {
           this.marketplaceClient.emit(

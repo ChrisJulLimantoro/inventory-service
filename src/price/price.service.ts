@@ -27,8 +27,16 @@ export class PriceService extends BaseService {
     return new UpdatePriceRequest(data);
   }
 
-  async bulkDelete(category_id: string, date: string): Promise<CustomResponse> {
-    const data = await this.priceRepository.bulkDelete(category_id, date);
+  async bulkDelete(
+    category_id: string,
+    date: string,
+    user_id?: string,
+  ): Promise<CustomResponse> {
+    const data = await this.priceRepository.bulkDelete(
+      category_id,
+      date,
+      user_id,
+    );
     console.log(data);
     if (!data) {
       return CustomResponse.error('Failed to delete data', null, 500);

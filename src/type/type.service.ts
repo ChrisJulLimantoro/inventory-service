@@ -29,7 +29,10 @@ export class TypeService extends BaseService {
     return new UpdateTypeRequest(data);
   }
 
-  async bulkCreate(data: Record<string, any>[]): Promise<CustomResponse> {
+  async bulkCreate(
+    data: Record<string, any>[],
+    user_id?: string,
+  ): Promise<CustomResponse> {
     if (data.length === 0) {
       return CustomResponse.error('Data cannot be empty', null, 400);
     }
@@ -52,11 +55,13 @@ export class TypeService extends BaseService {
       }),
     );
 
-    console.log(data);
-    return super.bulkCreate(data);
+    return super.bulkCreate(data, user_id);
   }
 
-  async bulkUpdate(data: Record<string, any>[]): Promise<CustomResponse> {
+  async bulkUpdate(
+    data: Record<string, any>[],
+    user_id?: string,
+  ): Promise<CustomResponse> {
     if (data.length === 0) {
       return CustomResponse.error('Data cannot be empty', null, 400);
     }
@@ -100,7 +105,9 @@ export class TypeService extends BaseService {
     try {
       // Perform bulk insert in parallel
       const updatedData = await Promise.all(
-        validatedData.map((item) => this.repository.update(item.id, item.data)),
+        validatedData.map((item) =>
+          this.repository.update(item.id, item.data, user_id),
+        ),
       );
 
       return CustomResponse.success(
@@ -113,7 +120,10 @@ export class TypeService extends BaseService {
     }
   }
 
-  async create(data: Record<string, any>): Promise<CustomResponse> {
+  async create(
+    data: Record<string, any>,
+    user_id?: string,
+  ): Promise<CustomResponse> {
     const catCode = await this.generateCode(data.category_id);
     const comp = await this.categoryRepository.findOne(data.category_id);
     data.code = comp.code + catCode;
@@ -124,17 +134,21 @@ export class TypeService extends BaseService {
       data.fixed_broken_reduction = 0;
     }
     console.log(data);
-    return super.create(data);
+    return super.create(data, user_id);
   }
 
-  async update(id: string, data: Record<string, any>): Promise<CustomResponse> {
+  async update(
+    id: string,
+    data: Record<string, any>,
+    user_id?: string,
+  ): Promise<CustomResponse> {
     if (Number(data.percent_price_reduction) > 0) {
       data.fixed_price_reduction = 0;
     }
     if (Number(data.percent_broken_reduction) > 0) {
       data.fixed_broken_reduction = 0;
     }
-    return super.update(id, data);
+    return super.update(id, data, user_id);
   }
 
   async generateCode(category_id: string, index: number = 0): Promise<string> {
@@ -142,7 +156,7 @@ export class TypeService extends BaseService {
     return (count + 1 + index).toString().padStart(2, '0');
   }
 
-  async delete(id: string): Promise<CustomResponse> {
+  async delete(id: string, user_id?: string): Promise<CustomResponse> {
     const type = await this.typeRepository.findOne(id);
     if (!type) {
       throw new Error('Type not found');
@@ -152,6 +166,6 @@ export class TypeService extends BaseService {
         'Cannot delete type with associated products. Please remove the products first.',
       );
     }
-    return super.delete(id);
+    return super.delete(id, user_id);
   }
 }

@@ -39,7 +39,7 @@ export class ProductService extends BaseService {
     return new UpdateProductRequest(data);
   }
 
-  async create(data: any): Promise<CustomResponse> {
+  async create(data: any, user_id?: string): Promise<CustomResponse> {
     // Generate Code
     const TypeCode = await this.repository.getTypeCode(data.type_id);
     if (!TypeCode) {
@@ -49,10 +49,10 @@ export class ProductService extends BaseService {
     const count = await this.repository.count();
     data.code = `${TypeCode.code}${(count + 1).toString().padStart(4, '0')}`;
 
-    return super.create(data);
+    return super.create(data, user_id);
   }
 
-  async delete(id: string): Promise<CustomResponse> {
+  async delete(id: string, user_id?: string): Promise<CustomResponse> {
     const product = await this.productRepository.findOne(id);
     if (!product) {
       throw new Error('Product not found');
@@ -61,7 +61,7 @@ export class ProductService extends BaseService {
       throw new Error('There are some product codes still active!');
     }
 
-    return super.delete(id);
+    return super.delete(id, user_id);
   }
 
   async getProductCodes(product_id: any) {
@@ -72,7 +72,7 @@ export class ProductService extends BaseService {
     return CustomResponse.success('Product codes retrieved!', codes, 200);
   }
 
-  async generateProductCode(product_id: any, data: any) {
+  async generateProductCode(product_id: any, data: any, user_id?: string) {
     const product = await this.productRepository.findOne(product_id);
     if (!product) {
       throw new Error('Product not found');
@@ -88,7 +88,7 @@ export class ProductService extends BaseService {
       data,
       CreateProductCodeDto.schema(),
     );
-    const code = await this.productCodeRepository.create(validated);
+    const code = await this.productCodeRepository.create(validated, user_id);
     return CustomResponse.success('Product code generated!', code, 201);
   }
 
@@ -132,8 +132,6 @@ export class ProductService extends BaseService {
       sort,
       search,
     );
-    console.log(filter, page, limit, sort, search);
-    console.log(codes);
     const data = codes.map((code) => {
       return {
         id: code.id,
@@ -153,7 +151,7 @@ export class ProductService extends BaseService {
     return CustomResponse.success('Product codes retrieved!', data, 200);
   }
 
-  async productCodeOut(data: Record<string, any>) {
+  async productCodeOut(data: Record<string, any>, user_id?: string) {
     const { date, taken_out_reason, codes, auth, params } = data;
     try {
       await this.prisma.$transaction(async (prisma) => {
@@ -171,12 +169,16 @@ export class ProductService extends BaseService {
               `Product code ${code.barcode} is not in this store`,
             );
           }
-          await this.productCodeRepository.update(item.id, {
-            status: 3,
-            taken_out_at: new Date(date),
-            taken_out_reason: Number(taken_out_reason),
-            taken_out_by: params.user.id,
-          });
+          await this.productCodeRepository.update(
+            item.id,
+            {
+              status: 3,
+              taken_out_at: new Date(date),
+              taken_out_reason: Number(taken_out_reason),
+              taken_out_by: params.user.id,
+            },
+            user_id,
+          );
           // Add stock mutation (ELLA)
           this.financeClient.emit(
             { cmd: 'stock_out' },
@@ -228,7 +230,7 @@ export class ProductService extends BaseService {
     return CustomResponse.success('Product code out!', null, 200);
   }
 
-  async unstockOut(id: string) {
+  async unstockOut(id: string, user_id?: string) {
     const code = await this.productCodeRepository.findOne(id);
     try {
       if (!code) {
@@ -237,12 +239,16 @@ export class ProductService extends BaseService {
       if (code.status !== 3) {
         throw new Error('Product code not taken out');
       }
-      await this.productCodeRepository.update(id, {
-        status: 0,
-        taken_out_at: null,
-        taken_out_by: null,
-        taken_out_reason: 0,
-      });
+      await this.productCodeRepository.update(
+        id,
+        {
+          status: 0,
+          taken_out_at: null,
+          taken_out_by: null,
+          taken_out_reason: 0,
+        },
+        user_id,
+      );
     } catch (e) {
       return CustomResponse.error(e.message, null, 400);
     }
@@ -290,7 +296,11 @@ export class ProductService extends BaseService {
     return CustomResponse.success('QR Product code generated!', qr, 200);
   }
 
-  async updateProductCode(id: string, data: any): Promise<CustomResponse> {
+  async updateProductCode(
+    id: string,
+    data: any,
+    user_id?: string,
+  ): Promise<CustomResponse> {
     const code = await this.productCodeRepository.findOne(id);
     if (!code) {
       throw new Error('Product code not found');
@@ -300,11 +310,11 @@ export class ProductService extends BaseService {
       validated,
       UpdateProductCodeDto.schema(),
     );
-    await this.productCodeRepository.update(id, updateData);
+    await this.productCodeRepository.update(id, updateData, user_id);
     return CustomResponse.success('Product code updated!', null, 200);
   }
 
-  async deleteProductCode(id: any) {
+  async deleteProductCode(id: any, user_id?: string) {
     const code = await this.productCodeRepository.findOne(id);
     if (!code) {
       throw new Error('Product code not found');
@@ -314,7 +324,7 @@ export class ProductService extends BaseService {
     } else if (code.status === 3) {
       throw new Error('Product code still taken out!');
     }
-    await this.productCodeRepository.delete(id);
+    await this.productCodeRepository.delete(id, user_id);
     return CustomResponse.success('Product code deleted!', code, 200);
   }
 
@@ -362,7 +372,7 @@ export class ProductService extends BaseService {
     return CustomResponse.success('Product code retrieved!', data, 200);
   }
 
-  async productCodeRepaired(data: Record<string, any>) {
+  async productCodeRepaired(data: Record<string, any>, user_id?: string) {
     const { auth, owner_id, weight, expense, id, params, account_id } = data;
     try {
       await this.prisma.$transaction(async (prisma) => {
@@ -374,10 +384,14 @@ export class ProductService extends BaseService {
           throw new Error(`Product code ${code.barcode} is not in this store`);
         }
         // TODOCEJE UPDATE STATUS
-        await this.productCodeRepository.update(id, {
-          status: 0,
-          weight: weight,
-        });
+        await this.productCodeRepository.update(
+          id,
+          {
+            status: 0,
+            weight: weight,
+          },
+          user_id,
+        );
         // To Transaction
         this.transactionClient.emit(
           { cmd: 'product_code_updated' },

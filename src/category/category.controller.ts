@@ -67,10 +67,8 @@ export class CategoryController {
   })
   async create(@Payload() data: any): Promise<CustomResponse> {
     const createData = data.body;
-    console.log(data.params);
-    createData.created_by = data.params.user.id;
 
-    const response = await this.service.create(createData);
+    const response = await this.service.create(createData, data.params.user.id);
     if (response.success) {
       this.marketplaceClient.emit(
         { service: 'marketplace', module: 'category', action: 'create' },
@@ -86,7 +84,11 @@ export class CategoryController {
   async update(@Payload() data: any): Promise<CustomResponse> {
     const param = data.params;
     const body = data.body;
-    const response = await this.service.update(param.id, body);
+    const response = await this.service.update(
+      param.id,
+      body,
+      data.params.user.id,
+    );
     if (response.success) {
       this.marketplaceClient.emit(
         { service: 'marketplace', module: 'category', action: 'update' },
@@ -101,7 +103,7 @@ export class CategoryController {
   @Describe({ description: 'Delete category', fe: ['master/category:delete'] })
   async delete(@Payload() data: any): Promise<CustomResponse> {
     const param = data.params;
-    const response = await this.service.delete(param.id);
+    const response = await this.service.delete(param.id, param.user.id);
     if (response.success) {
       this.marketplaceClient.emit(
         { service: 'marketplace', module: 'category', action: 'softdelete' },

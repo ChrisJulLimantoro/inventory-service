@@ -29,7 +29,7 @@ export class OperationService extends BaseService {
     return new UpdateOperationRequest(data);
   }
 
-  async create(data: any) {
+  async create(data: any, user_id?: string) {
     // Generate Code
     const store = await this.storeRepository.findOne(data.store_id);
 
@@ -42,6 +42,6 @@ export class OperationService extends BaseService {
     });
     data.code = `${store.code}OP${(count + 1).toString().padStart(3, '0')}`;
 
-    return super.create(data);
+    return super.create(data, user_id);
   }
 }

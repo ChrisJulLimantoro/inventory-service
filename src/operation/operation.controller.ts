@@ -46,10 +46,8 @@ export class OperationController {
   })
   async create(@Payload() data: any): Promise<CustomResponse> {
     const createData = data.body;
-    console.log(data.params);
-    createData.owner_id = data.params.user.id;
 
-    const response = await this.service.create(createData);
+    const response = await this.service.create(createData, data.params.user.id);
     if (response.success) {
       this.transactionClient.emit({ cmd: 'operation_created' }, response.data);
       this.marketplaceClient.emit({ cmd: 'operation_created' }, response.data);
@@ -66,7 +64,7 @@ export class OperationController {
   async update(@Payload() data: any): Promise<CustomResponse> {
     const param = data.params;
     const body = data.body;
-    const response = await this.service.update(param.id, body);
+    const response = await this.service.update(param.id, body, param.user.id);
     if (response.success) {
       this.transactionClient.emit({ cmd: 'operation_updated' }, response.data);
       this.marketplaceClient.emit({ cmd: 'operation_updated' }, response.data);
@@ -82,7 +80,7 @@ export class OperationController {
   })
   async delete(@Payload() data: any): Promise<CustomResponse> {
     const param = data.params;
-    const response = await this.service.delete(param.id);
+    const response = await this.service.delete(param.id, param.user.id);
     if (response.success) {
       this.transactionClient.emit(
         { cmd: 'operation_deleted' },

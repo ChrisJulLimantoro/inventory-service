@@ -33,7 +33,7 @@ export class StockOpnameService extends BaseService {
     return new StockOpnameDTO(data);
   }
 
-  async createDetail(id: string, data: any) {
+  async createDetail(id: string, data: any, user_id?: string) {
     const stockOpname = await this.stockOpnameRepository.findOne(id);
     if (!stockOpname) {
       throw new Error('Stock Opname not found');
@@ -64,15 +64,17 @@ export class StockOpnameService extends BaseService {
       data,
       StockOpnameDetailDTO.createSchema(),
     );
-    const stockOpnameDetail =
-      await this.stockOpnameDetailRepository.create(validate);
+    const stockOpnameDetail = await this.stockOpnameDetailRepository.create(
+      validate,
+      user_id,
+    );
     if (!validate) {
       throw new Error('Failed to create new data');
     }
     return CustomResponse.success(stockOpnameDetail, 200);
   }
 
-  async delete(id: string) {
+  async delete(id: string, user_id?: string) {
     const stockOpname = await this.stockOpnameRepository.findOne(id);
     if (!stockOpname) {
       throw new Error('Stock Opname not found');
@@ -80,8 +82,12 @@ export class StockOpnameService extends BaseService {
 
     await this.stockOpnameDetailRepository.deleteWhere({
       stock_opname_id: id,
+      user_id,
     });
-    const deleteStockOpname = await this.stockOpnameRepository.delete(id);
+    const deleteStockOpname = await this.stockOpnameRepository.delete(
+      id,
+      user_id,
+    );
 
     return CustomResponse.success(deleteStockOpname, 200);
   }
@@ -94,12 +100,16 @@ export class StockOpnameService extends BaseService {
 
     // Add logic to check the approve by if needed!
 
-    const updateStockOpname = await this.stockOpnameRepository.update(id, {
-      status: 1,
-      approve: true,
-      approve_by: approve_by,
-      approve_at: new Date(),
-    });
+    const updateStockOpname = await this.stockOpnameRepository.update(
+      id,
+      {
+        status: 1,
+        approve: true,
+        approve_by: approve_by,
+        approve_at: new Date(),
+      },
+      approve_by,
+    );
 
     const scanned = updateStockOpname.details;
     // console.log('updateStockOpname', updateStockOpname)
@@ -189,9 +199,12 @@ export class StockOpnameService extends BaseService {
     //     deleted_at: null
     //   }
     // }
-    
+
     console.log('scanned', scanned);
-    const stockNotScanned = await this.stockOpnameRepository.findNotScanned(id, scanned);
+    const stockNotScanned = await this.stockOpnameRepository.findNotScanned(
+      id,
+      scanned,
+    );
     // console.log('this is stock not scanned',stockNotScanned);
     // this is stock not scanned [
     //   {
@@ -228,10 +241,12 @@ export class StockOpnameService extends BaseService {
     //   }
     // }
     // ]
-    
 
     if (stockNotScanned.length > 0) {
-      this.financeClient.emit({ cmd: 'stock_opname_approved' }, {stockNotScanned, id: updateStockOpname.id, trans_date: new Date()});
+      this.financeClient.emit(
+        { cmd: 'stock_opname_approved' },
+        { stockNotScanned, id: updateStockOpname.id, trans_date: new Date() },
+      );
     }
 
     return CustomResponse.success(
@@ -249,15 +264,25 @@ export class StockOpnameService extends BaseService {
 
     // Add logic to check the disapprove by if needed!
 
-    const updateStockOpname = await this.stockOpnameRepository.update(id, {
-      status: 0,
-      approve: false,
-      approve_by: disapprove_by,
-      approve_at: new Date(),
-    });
+    const updateStockOpname = await this.stockOpnameRepository.update(
+      id,
+      {
+        status: 0,
+        approve: false,
+        approve_by: disapprove_by,
+        approve_at: new Date(),
+      },
+      disapprove_by,
+    );
     const scanned = updateStockOpname.details;
-    const stockNotScanned = await this.stockOpnameRepository.findNotScanned(id, scanned);
-    this.financeClient.emit({ cmd: 'stock_opname_disapproved' },{stockNotScanned, id})
+    const stockNotScanned = await this.stockOpnameRepository.findNotScanned(
+      id,
+      scanned,
+    );
+    this.financeClient.emit(
+      { cmd: 'stock_opname_disapproved' },
+      { stockNotScanned, id },
+    );
 
     return CustomResponse.success(
       'Successfully dissaprove stock opname',

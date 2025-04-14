@@ -31,16 +31,16 @@ export class CategoryService extends BaseService {
     return new UpdateCategoryRequest(data);
   }
 
-  async create(data: any) {
+  async create(data: any, user_id?: string) {
     const count = await this.repository.count({
       company_id: data.company_id,
     });
     const company = await this.companyRepository.findOne(data.company_id);
     data.code = `${company.code}${(count + 1).toString().padStart(3, '0')}`;
-    return super.create(data);
+    return super.create(data, user_id);
   }
 
-  async delete(id: string): Promise<CustomResponse> {
+  async delete(id: string, user_id?: string): Promise<CustomResponse> {
     const category = await this.repository.findOne(id);
     if (!category) {
       throw new Error('Category not found');
@@ -50,7 +50,7 @@ export class CategoryService extends BaseService {
         'Cannot delete category with existing products, delete products first',
       );
     }
-    return super.delete(id);
+    return super.delete(id, user_id);
   }
 
   async findAllPriceCategory(

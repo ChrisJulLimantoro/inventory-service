@@ -47,7 +47,7 @@ export class StockOpnameController {
       store_id: data.body.auth.store_id,
       created_by: data.params.user.id,
     };
-    return this.service.create(body);
+    return this.service.create(body, data.params.user.id);
   }
 
   @MessagePattern({ cmd: 'put:stock-opname/*' })
@@ -61,7 +61,7 @@ export class StockOpnameController {
       store_id: data.body.auth.store_id,
       created_by: data.params.user.id,
     };
-    return this.service.update(data.params.id, body);
+    return this.service.update(data.params.id, body, data.params.user.id);
   }
 
   @MessagePattern({ cmd: 'post:stock-opname-detail/*' })
@@ -70,7 +70,11 @@ export class StockOpnameController {
     fe: ['inventory/stock-opname:edit', 'inventory/stock-opname:detail'],
   })
   async createDetail(@Payload() data: any): Promise<CustomResponse> {
-    return this.service.createDetail(data.params.id, data.body);
+    return this.service.createDetail(
+      data.params.id,
+      data.body,
+      data.params.user.id,
+    );
   }
 
   @MessagePattern({ cmd: 'delete:stock-opname/*' })
@@ -79,7 +83,7 @@ export class StockOpnameController {
     fe: ['inventory/stock-opname:delete'],
   })
   async delete(@Payload() data: any): Promise<CustomResponse> {
-    return this.service.delete(data.params.id);
+    return this.service.delete(data.params.id, data.params.user.id);
   }
 
   @MessagePattern({ cmd: 'put:stock-opname-approve/*' })
