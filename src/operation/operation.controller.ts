@@ -1,16 +1,27 @@
 import { Controller, Inject } from '@nestjs/common';
-import { ClientProxy, MessagePattern, Payload } from '@nestjs/microservices';
+import {
+  ClientProxy,
+  Ctx,
+  EventPattern,
+  MessagePattern,
+  Payload,
+  RmqContext,
+} from '@nestjs/microservices';
 import { Describe } from 'src/decorator/describe.decorator';
 import { CustomResponse } from 'src/exception/dto/custom-response.dto';
 import { OperationService } from './operation.service';
+import { Exempt } from 'src/decorator/exempt.decorator';
+import { RmqHelper } from 'src/helper/rmq.helper';
+import { PrismaService } from 'src/prisma/prisma.service';
 
 @Controller('operation')
 export class OperationController {
   constructor(
     private readonly service: OperationService,
-    @Inject('TRANSACTION') private readonly transactionClient: ClientProxy,
-    @Inject('MARKETPLACE') private readonly marketplaceClient: ClientProxy,
-    @Inject('FINANCE') private readonly financeClient: ClientProxy,
+    private readonly prisma: PrismaService,
+    // @Inject('TRANSACTION') private readonly transactionClient: ClientProxy,
+    // @Inject('MARKETPLACE') private readonly marketplaceClient: ClientProxy,
+    // @Inject('FINANCE') private readonly financeClient: ClientProxy,
   ) {}
 
   @MessagePattern({ cmd: 'get:operation' })
@@ -49,11 +60,30 @@ export class OperationController {
 
     const response = await this.service.create(createData, data.params.user.id);
     if (response.success) {
-      this.transactionClient.emit({ cmd: 'operation_created' }, response.data);
-      this.marketplaceClient.emit({ cmd: 'operation_created' }, response.data);
-      this.financeClient.emit({ cmd: 'operation_created' }, response.data);
+      RmqHelper.publishEvent('operation.created', {
+        data: response.data,
+        user: data.params.user.id,
+      });
     }
     return response;
+  }
+
+  @EventPattern('operation.created')
+  @Exempt()
+  async createReplica(@Payload() data: any, @Ctx() context: RmqContext) {
+    await RmqHelper.handleMessageProcessing(
+      context,
+      async () => {
+        console.log('Captured Operation Create Event', data);
+        await this.service.createReplica(data.data, data.user);
+      },
+      {
+        queueName: 'operation.created',
+        useDLQ: true,
+        dlqRoutingKey: 'dlq.operation.created',
+        prisma: this.prisma,
+      },
+    )();
   }
 
   @MessagePattern({ cmd: 'put:operation/*' })
@@ -66,11 +96,30 @@ export class OperationController {
     const body = data.body;
     const response = await this.service.update(param.id, body, param.user.id);
     if (response.success) {
-      this.transactionClient.emit({ cmd: 'operation_updated' }, response.data);
-      this.marketplaceClient.emit({ cmd: 'operation_updated' }, response.data);
-      this.financeClient.emit({ cmd: 'operation_updated' }, response.data);
+      RmqHelper.publishEvent('operation.updated', {
+        data: response.data,
+        user: param.user.id,
+      });
     }
     return response;
+  }
+
+  @EventPattern('operation.updated')
+  @Exempt()
+  async updateReplica(@Payload() data: any, @Ctx() context: RmqContext) {
+    await RmqHelper.handleMessageProcessing(
+      context,
+      async () => {
+        console.log('Captured Operation Update Event', data);
+        await this.service.update(data.data.id, data.data, data.user);
+      },
+      {
+        queueName: 'operation.updated',
+        useDLQ: true,
+        dlqRoutingKey: 'dlq.operation.updated',
+        prisma: this.prisma,
+      },
+    )();
   }
 
   @MessagePattern({ cmd: 'delete:operation/*' })
@@ -82,16 +131,29 @@ export class OperationController {
     const param = data.params;
     const response = await this.service.delete(param.id, param.user.id);
     if (response.success) {
-      this.transactionClient.emit(
-        { cmd: 'operation_deleted' },
-        response.data.id,
-      );
-      this.marketplaceClient.emit(
-        { cmd: 'operation_deleted' },
-        response.data.id,
-      );
-      this.financeClient.emit({ cmd: 'operation_deleted' }, response.data.id);
+      RmqHelper.publishEvent('operation.deleted', {
+        data: response.data.id,
+        user: param.user.id,
+      });
     }
     return response;
+  }
+
+  @EventPattern('operation.deleted')
+  @Exempt()
+  async deleteReplica(@Payload() data: any, @Ctx() context: RmqContext) {
+    await RmqHelper.handleMessageProcessing(
+      context,
+      async () => {
+        console.log('Captured Operation Delete Event', data);
+        return await this.service.delete(data.data, data.user);
+      },
+      {
+        queueName: 'operation.deleted',
+        useDLQ: true,
+        dlqRoutingKey: 'dlq.operation.deleted',
+        prisma: this.prisma,
+      },
+    )();
   }
 }

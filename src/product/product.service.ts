@@ -11,6 +11,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { UpdateProductCodeDto } from './dto/update-productCode.dto';
 import { QrService } from 'src/qr/qr.service';
 import { ClientProxy } from '@nestjs/microservices';
+import { RmqHelper } from 'src/helper/rmq.helper';
 
 @Injectable()
 export class ProductService extends BaseService {
@@ -90,6 +91,29 @@ export class ProductService extends BaseService {
     );
     const code = await this.productCodeRepository.create(validated, user_id);
     return CustomResponse.success('Product code generated!', code, 201);
+  }
+
+  async productCodeReplica(data: any, user_id?: string) {
+    const createData = {
+      id: data.id,
+      barcode: data.barcode,
+      product_id: data.product_id,
+      status: data.status,
+      weight: data.weight,
+      fixed_price: data.fixed_price,
+      buy_price: data.buy_price,
+      taken_out_at: data.taken_out_at,
+      taken_out_reason: data.taken_out_reason,
+      taken_out_by: data.taken_out_by,
+      created_at: data.created_at,
+      updated_at: data.updated_at,
+      deleted_at: data.deleted_at,
+    };
+    const code = await this.productCodeRepository.create(createData, user_id);
+    if (!code) {
+      throw new Error('Failed to create product code');
+    }
+    return CustomResponse.success('Product code created!', code, 201);
   }
 
   async getProductCodeOut(
@@ -180,14 +204,21 @@ export class ProductService extends BaseService {
             user_id,
           );
           // Add stock mutation (ELLA)
-          this.financeClient.emit(
-            { cmd: 'stock_out' },
-            {
+          RmqHelper.publishEvent('stock.out', {
+            data: {
               productCode: code,
               reason: Number(taken_out_reason),
               trans_date: new Date(date),
             },
-          );
+          });
+          // this.financeClient.emit(
+          //   { cmd: 'stock_out' },
+          //   {
+          //     productCode: code,
+          //     reason: Number(taken_out_reason),
+          //     trans_date: new Date(date),
+          //   },
+          // );
         }
       });
     } catch (e) {
@@ -198,9 +229,9 @@ export class ProductService extends BaseService {
     // FOR SYNC to other service
     for (const item of codes) {
       const code = await this.productCodeRepository.findOne(item.id);
-      this.transactionClient.emit(
-        { cmd: 'product_code_updated' },
-        {
+      // Product Code Out
+      RmqHelper.publishEvent('product.code.out', {
+        data: {
           id: item.id,
           barcode: code.barcode,
           product_id: code.product_id,
@@ -209,22 +240,35 @@ export class ProductService extends BaseService {
           fixed_price: code.fixed_price,
           taken_out_at: code.taken_out_at,
         },
-      );
-      this.marketplaceClient.emit(
-        {
-          module: 'product',
-          action: 'updateProductCode',
-        },
-        {
-          id: item.id,
-          barcode: code.barcode,
-          product_id: code.product_id,
-          status: code.status,
-          weight: code.weight,
-          fixed_price: code.fixed_price,
-          taken_out_at: code.taken_out_at,
-        },
-      );
+        user: params.user.id,
+      });
+      // this.transactionClient.emit(
+      //   { cmd: 'product_code_updated' },
+      //   {
+      //     id: item.id,
+      //     barcode: code.barcode,
+      //     product_id: code.product_id,
+      //     status: code.status,
+      //     weight: code.weight,
+      //     fixed_price: code.fixed_price,
+      //     taken_out_at: code.taken_out_at,
+      //   },
+      // );
+      // this.marketplaceClient.emit(
+      //   {
+      //     module: 'product',
+      //     action: 'updateProductCode',
+      //   },
+      //   {
+      //     id: item.id,
+      //     barcode: code.barcode,
+      //     product_id: code.product_id,
+      //     status: code.status,
+      //     weight: code.weight,
+      //     fixed_price: code.fixed_price,
+      //     taken_out_at: code.taken_out_at,
+      //   },
+      // );
     }
 
     return CustomResponse.success('Product code out!', null, 200);
@@ -253,12 +297,15 @@ export class ProductService extends BaseService {
       return CustomResponse.error(e.message, null, 400);
     }
     // Add stock mutation (ELLA)
-    this.financeClient.emit({ cmd: 'unstock_out' }, { productCode: code });
+    RmqHelper.publishEvent('stock.unstock.out', {
+      data: code,
+      user: user_id,
+    });
+    // this.financeClient.emit({ cmd: 'unstock_out' }, { productCode: code });
 
-    // FOR SYNC to other service
-    this.transactionClient.emit(
-      { cmd: 'product_code_updated' },
-      {
+    // // FOR SYNC to other service
+    RmqHelper.publishEvent('product.code.updated', {
+      data: {
         id: code.id,
         barcode: code.barcode,
         product_id: code.product_id,
@@ -267,22 +314,35 @@ export class ProductService extends BaseService {
         fixed_price: code.fixed_price,
         taken_out_at: null,
       },
-    );
-    this.marketplaceClient.emit(
-      {
-        module: 'product',
-        action: 'updateProductCode',
-      },
-      {
-        id: code.id,
-        barcode: code.barcode,
-        product_id: code.product_id,
-        status: 0,
-        weight: code.weight,
-        fixed_price: code.fixed_price,
-        taken_out_at: null,
-      },
-    );
+      user: user_id,
+    });
+    // this.transactionClient.emit(
+    //   { cmd: 'product_code_updated' },
+    //   {
+    //     id: code.id,
+    //     barcode: code.barcode,
+    //     product_id: code.product_id,
+    //     status: 0,
+    //     weight: code.weight,
+    //     fixed_price: code.fixed_price,
+    //     taken_out_at: null,
+    //   },
+    // );
+    // this.marketplaceClient.emit(
+    //   {
+    //     module: 'product',
+    //     action: 'updateProductCode',
+    //   },
+    //   {
+    //     id: code.id,
+    //     barcode: code.barcode,
+    //     product_id: code.product_id,
+    //     status: 0,
+    //     weight: code.weight,
+    //     fixed_price: code.fixed_price,
+    //     taken_out_at: null,
+    //   },
+    // );
     return CustomResponse.success('Product code unstocked!', null, 200);
   }
 
@@ -393,29 +453,51 @@ export class ProductService extends BaseService {
           user_id,
         );
         // To Transaction
-        this.transactionClient.emit(
-          { cmd: 'product_code_updated' },
-          {
+        RmqHelper.publishEvent('product.code.updated', {
+          data: {
             id: code.id,
             barcode: code.barcode,
             product_id: code.product_id,
             status: 0,
-            weight: code.weight,
+            weight: weight,
             fixed_price: code.fixed_price,
             taken_out_at: null,
           },
-        );
+          user: user_id,
+        });
+        // this.transactionClient.emit(
+        //   { cmd: 'product_code_updated' },
+        //   {
+        //     id: code.id,
+        //     barcode: code.barcode,
+        //     product_id: code.product_id,
+        //     status: 0,
+        //     weight: code.weight,
+        //     fixed_price: code.fixed_price,
+        //     taken_out_at: null,
+        //   },
+        // );
         // Add stock mutation (ELLA)
-        this.financeClient.emit(
-          { cmd: 'stock_repaired' },
-          {
+        RmqHelper.publishEvent('stock.repaired', {
+          data: {
             productCode: code,
             trans_date: new Date(),
             account_id,
             weight,
             expense,
           },
-        );
+          user: user_id,
+        });
+        // this.financeClient.emit(
+        //   { cmd: 'stock_repaired' },
+        //   {
+        //     productCode: code,
+        //     trans_date: new Date(),
+        //     account_id,
+        //     weight,
+        //     expense,
+        //   },
+        // );
       });
     } catch (e) {
       console.error(e.message);

@@ -1,15 +1,24 @@
 import { Controller, Inject } from '@nestjs/common';
-import { ClientProxy, MessagePattern, Payload } from '@nestjs/microservices';
+import {
+  ClientProxy,
+  Ctx,
+  EventPattern,
+  MessagePattern,
+  Payload,
+  RmqContext,
+} from '@nestjs/microservices';
 import { Describe } from 'src/decorator/describe.decorator';
 import { CustomResponse } from 'src/exception/dto/custom-response.dto';
 import { PriceService } from './price.service';
+import { RmqHelper } from 'src/helper/rmq.helper';
+import { Exempt } from 'src/decorator/exempt.decorator';
+import { PrismaService } from 'src/prisma/prisma.service';
 
 @Controller('price')
 export class PriceController {
   constructor(
     private readonly service: PriceService,
-    @Inject('MARKETPLACE') private readonly marketplaceClient: ClientProxy,
-    @Inject('TRANSACTION') private readonly transactionClient: ClientProxy,
+    private readonly prisma: PrismaService,
   ) {}
 
   // USED
@@ -39,13 +48,30 @@ export class PriceController {
     const body = data.body;
     const response = await this.service.update(param.id, body, param.user.id);
     if (response.success) {
-      this.marketplaceClient.emit(
-        { service: 'marketplace', module: 'price', action: 'update' },
-        response.data,
-      );
-      this.transactionClient.emit({ cmd: 'price_updated' }, response.data);
+      RmqHelper.publishEvent('price.updated', {
+        data: response.data,
+        user: param.user.id,
+      });
     }
     return response;
+  }
+
+  @EventPattern('price.updated')
+  @Exempt()
+  async updateReplica(@Payload() data: any, @Ctx() context: RmqContext) {
+    await RmqHelper.handleMessageProcessing(
+      context,
+      async () => {
+        console.log('Captured Operation Update Event', data);
+        await this.service.update(data.data.id, data.data, data.user);
+      },
+      {
+        queueName: 'operation.updated',
+        useDLQ: true,
+        dlqRoutingKey: 'dlq.operation.updated',
+        prisma: this.prisma,
+      },
+    )();
   }
 
   @MessagePattern({ cmd: 'post:bulk-price' })
@@ -59,14 +85,31 @@ export class PriceController {
     );
     if (response.success) {
       response.data.forEach((item) => {
-        this.marketplaceClient.emit(
-          { service: 'marketplace', module: 'price', action: 'create' },
-          item,
-        );
-        this.transactionClient.emit({ cmd: 'price_created' }, item);
+        RmqHelper.publishEvent('price.created', {
+          data: item,
+          user: data.param.user.id,
+        });
       });
     }
     return response;
+  }
+
+  @EventPattern('price.created')
+  @Exempt()
+  async createReplica(@Payload() data: any, @Ctx() context: RmqContext) {
+    await RmqHelper.handleMessageProcessing(
+      context,
+      async () => {
+        console.log('Captured Price Create Event', data);
+        await this.service.createReplica(data.data, data.user);
+      },
+      {
+        queueName: 'price.created',
+        useDLQ: true,
+        dlqRoutingKey: 'dlq.price.created',
+        prisma: this.prisma,
+      },
+    )();
   }
 
   @MessagePattern({ cmd: 'delete:bulk-price/*' })
@@ -80,13 +123,30 @@ export class PriceController {
     );
     if (response.success) {
       response.data.forEach((data) => {
-        this.marketplaceClient.emit(
-          { service: 'marketplace', module: 'price', action: 'softdelete' },
-          data.id,
-        );
-        this.transactionClient.emit({ cmd: 'price_deleted' }, data.id);
+        RmqHelper.publishEvent('price.deleted', {
+          data: data,
+          user: data.params.user.id,
+        });
       });
     }
     return response;
+  }
+
+  @EventPattern('price.deleted')
+  @Exempt()
+  async deleteReplica(@Payload() data: any, @Ctx() context: RmqContext) {
+    await RmqHelper.handleMessageProcessing(
+      context,
+      async () => {
+        console.log('Captured Price Delete Event', data);
+        return await this.service.delete(data.data, data.user);
+      },
+      {
+        queueName: 'price.deleted',
+        useDLQ: true,
+        dlqRoutingKey: 'dlq.price.deleted',
+        prisma: this.prisma,
+      },
+    )();
   }
 }

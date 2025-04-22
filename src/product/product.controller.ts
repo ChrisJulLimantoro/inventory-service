@@ -10,12 +10,14 @@ import { Describe } from 'src/decorator/describe.decorator';
 import { CustomResponse } from 'src/exception/dto/custom-response.dto';
 import { ProductService } from './product.service';
 import { Exempt } from 'src/decorator/exempt.decorator';
-import { RmqAckHelper } from 'src/helper/rmq-ack.helper';
+import { RmqHelper } from 'src/helper/rmq.helper';
+import { PrismaService } from 'src/prisma/prisma.service';
 
 @Controller('product')
 export class ProductController {
   constructor(
     private readonly service: ProductService,
+    private readonly prisma: PrismaService,
     @Inject('MARKETPLACE') private readonly marketplaceClient: ClientProxy,
     @Inject('TRANSACTION') private readonly transactionClient: ClientProxy,
     @Inject('FINANCE') private readonly financeClient: ClientProxy,
@@ -71,13 +73,31 @@ export class ProductController {
     const createData = data.body;
     const response = await this.service.create(createData, data.params.user.id);
     if (response.success) {
-      this.marketplaceClient.emit(
-        { module: 'product', action: 'createProduct' },
-        response.data,
-      );
-      this.transactionClient.emit({ cmd: 'product_created' }, response.data);
+      RmqHelper.publishEvent('product.created', {
+        data: response.data,
+        user: data.params.user.id,
+      });
     }
     return response;
+  }
+
+  @EventPattern('product.created')
+  @Exempt()
+  async createReplica(@Payload() data: any, @Ctx() context: any) {
+    await RmqHelper.handleMessageProcessing(
+      context,
+      async () => {
+        console.log('Captured Product Create Event', data);
+        const response = await this.service.createReplica(data.data, data.user);
+        if (!response.success) throw new Error('Product create failed');
+      },
+      {
+        queueName: 'product.created',
+        useDLQ: true,
+        dlqRoutingKey: 'dlq.product.created',
+        prisma: this.prisma,
+      },
+    )();
   }
 
   @MessagePattern({ cmd: 'put:product/*' })
@@ -87,13 +107,35 @@ export class ProductController {
     const body = data.body;
     const response = await this.service.update(param.id, body, param.user.id);
     if (response.success) {
-      this.marketplaceClient.emit(
-        { module: 'product', action: 'updateProduct' },
-        response.data,
-      );
-      this.transactionClient.emit({ cmd: 'product_updated' }, response.data);
+      RmqHelper.publishEvent('product.updated', {
+        data: response.data,
+        user: data.params.user.id,
+      });
     }
     return response;
+  }
+
+  @EventPattern('product.updated')
+  @Exempt()
+  async updateReplica(@Payload() data: any, @Ctx() context: any) {
+    await RmqHelper.handleMessageProcessing(
+      context,
+      async () => {
+        console.log('Captured Product Update Event', data);
+        const response = await this.service.update(
+          data.data.id,
+          data.data,
+          data.user,
+        );
+        if (!response.success) throw new Error('Product update failed');
+      },
+      {
+        queueName: 'product.updated',
+        useDLQ: true,
+        dlqRoutingKey: 'dlq.product.updated',
+        prisma: this.prisma,
+      },
+    )();
   }
 
   @MessagePattern({ cmd: 'delete:product/*' })
@@ -102,13 +144,31 @@ export class ProductController {
     const param = data.params;
     const response = await this.service.delete(param.id, param.user.id);
     if (response.success) {
-      this.marketplaceClient.emit(
-        { module: 'product', action: 'deleteProduct' },
-        { id: response.data.id },
-      );
-      this.transactionClient.emit({ cmd: 'product_deleted' }, response.data.id);
+      RmqHelper.publishEvent('product.deleted', {
+        data: response.data,
+        user: param.user.id,
+      });
     }
     return response;
+  }
+
+  @EventPattern('product.deleted')
+  @Exempt()
+  async deleteReplica(@Payload() data: any, @Ctx() context: any) {
+    await RmqHelper.handleMessageProcessing(
+      context,
+      async () => {
+        console.log('Captured Product Delete Event', data);
+        const response = await this.service.delete(data.data.id, data.user);
+        if (!response.success) throw new Error('Product delete failed');
+      },
+      {
+        queueName: 'product.deleted',
+        useDLQ: true,
+        dlqRoutingKey: 'dlq.product.deleted',
+        prisma: this.prisma,
+      },
+    )();
   }
 
   @MessagePattern({ cmd: 'get:product-code' })
@@ -161,20 +221,36 @@ export class ProductController {
       param.user.id,
     );
     if (response.success) {
-      this.marketplaceClient.emit(
-        { module: 'product', action: 'generateProductCode' },
-        response.data,
-      );
       response.data.transref_id = body.transref_id;
-      console.log('generate product inventory', response.data);
-      this.transactionClient.emit(
-        { cmd: 'product_code_generated' },
-        response.data,
-      );
       response.data.store_id = body.store_id;
-      this.financeClient.emit({ cmd: 'product_code_generated' }, response.data);
+      RmqHelper.publishEvent('product.code.created', {
+        data: response.data,
+        user: param.user.id,
+      });
     }
     return response;
+  }
+
+  @EventPattern('product.code.created')
+  @Exempt()
+  async generateProductCodeReplica(@Payload() data: any, @Ctx() context: any) {
+    await RmqHelper.handleMessageProcessing(
+      context,
+      async () => {
+        console.log('Captured Product Code Create Event', data);
+        const response = await this.service.productCodeReplica(
+          data.data,
+          data.user,
+        );
+        if (!response.success) throw new Error('Product code create failed');
+      },
+      {
+        queueName: 'product.code.created',
+        useDLQ: true,
+        dlqRoutingKey: 'dlq.product.code.created',
+        prisma: this.prisma,
+      },
+    )();
   }
 
   @MessagePattern({ cmd: 'get:check-product/*' })
@@ -210,17 +286,34 @@ export class ProductController {
       param.user.id,
     );
     if (response) {
-      this.marketplaceClient.emit(
-        { module: 'product', action: 'deleteProductCode' },
-        { id: param.id },
-      );
-      this.transactionClient.emit(
-        { cmd: 'product_code_deleted' },
-        { id: param.id },
-      );
-      this.financeClient.emit({ cmd: 'product_code_deleted' }, response);
+      RmqHelper.publishEvent('product.code.deleted', {
+        data: response.data,
+        user: param.user.id,
+      });
     }
     return response;
+  }
+
+  @EventPattern('product.code.deleted')
+  @Exempt()
+  async deleteProductCodeReplica(@Payload() data: any, @Ctx() context: any) {
+    await RmqHelper.handleMessageProcessing(
+      context,
+      async () => {
+        console.log('Captured Product Code Delete Event', data);
+        const response = await this.service.deleteProductCode(
+          data.data.id,
+          data.user,
+        );
+        if (!response.success) throw new Error('Product code delete failed');
+      },
+      {
+        queueName: 'product.code.deleted',
+        useDLQ: true,
+        dlqRoutingKey: 'dlq.product.code.deleted',
+        prisma: this.prisma,
+      },
+    )();
   }
 
   @MessagePattern({ cmd: 'get:product-barcode/*' })
@@ -322,21 +415,26 @@ export class ProductController {
     }
   }
 
-  @EventPattern({ cmd: 'product_code_updated' })
+  @EventPattern('product.code.updated')
   @Exempt()
   async productStatusUpdated(@Payload() data: any, @Ctx() context: any) {
     console.log('Product Code Status Updated', data);
-    const sanitizedData = { status: data.status, weight: data.weight };
 
-    await RmqAckHelper.handleMessageProcessing(context, async () => {
-      const response = await this.service.updateProductCode(
-        data.id,
-        sanitizedData,
-      );
-      if (!response.success) throw new Error('Company update failed');
-      if (response.success) {
-        this.financeClient.emit({ cmd: 'product_code_updated' }, response.data);
-      }
-    })();
+    await RmqHelper.handleMessageProcessing(
+      context,
+      async () => {
+        const response = await this.service.updateProductCode(
+          data.id,
+          data.data,
+        );
+        if (!response.success) throw new Error('Company update failed');
+      },
+      {
+        queueName: 'product.code.updated',
+        useDLQ: true,
+        dlqRoutingKey: 'dlq.product.code.updated',
+        prisma: this.prisma,
+      },
+    )();
   }
 }

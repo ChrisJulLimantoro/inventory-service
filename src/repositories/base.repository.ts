@@ -15,7 +15,6 @@ export class BaseRepository<T> {
   async create(data: any, user_id?: string): Promise<T> {
     const created = await this.prisma[this.modelName].create({
       data,
-      include: this.relations,
     });
     await this.actionLog(this.modelName, created.id, 'CREATE', null, user_id);
     return created;

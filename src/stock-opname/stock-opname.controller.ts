@@ -1,12 +1,24 @@
 import { Controller } from '@nestjs/common';
 import { StockOpnameService } from './stock-opname.service';
-import { MessagePattern, Payload } from '@nestjs/microservices';
+import {
+  Ctx,
+  EventPattern,
+  MessagePattern,
+  Payload,
+  RmqContext,
+} from '@nestjs/microservices';
 import { Describe } from 'src/decorator/describe.decorator';
 import { CustomResponse } from 'src/exception/dto/custom-response.dto';
+import { RmqHelper } from 'src/helper/rmq.helper';
+import { Exempt } from 'src/decorator/exempt.decorator';
+import { PrismaService } from 'src/prisma/prisma.service';
 
 @Controller('stock-opname')
 export class StockOpnameController {
-  constructor(private readonly service: StockOpnameService) {}
+  constructor(
+    private readonly service: StockOpnameService,
+    private readonly prisma: PrismaService,
+  ) {}
 
   @MessagePattern({ cmd: 'get:stock-opname' })
   @Describe({
@@ -47,7 +59,32 @@ export class StockOpnameController {
       store_id: data.body.auth.store_id,
       created_by: data.params.user.id,
     };
-    return this.service.create(body, data.params.user.id);
+    const response = await this.service.create(body, data.params.user.id);
+    if (response.success) {
+      RmqHelper.publishEvent('stock.opname.created', {
+        data: response.data,
+        user: data.params.user.id,
+      });
+    }
+    return response;
+  }
+
+  @EventPattern('stock.opname.created')
+  @Exempt()
+  async createReplica(@Payload() data: any, @Ctx() context: RmqContext) {
+    await RmqHelper.handleMessageProcessing(
+      context,
+      async () => {
+        console.log('Captured Stock Opname Create Event', data);
+        await this.service.createReplica(data.data, data.user);
+      },
+      {
+        queueName: 'stock.opname.created',
+        useDLQ: true,
+        dlqRoutingKey: 'dlq.stock.opname.created',
+        prisma: this.prisma,
+      },
+    )();
   }
 
   @MessagePattern({ cmd: 'put:stock-opname/*' })
@@ -61,7 +98,36 @@ export class StockOpnameController {
       store_id: data.body.auth.store_id,
       created_by: data.params.user.id,
     };
-    return this.service.update(data.params.id, body, data.params.user.id);
+    const response = await this.service.update(
+      data.params.id,
+      body,
+      data.params.user.id,
+    );
+    if (response.success) {
+      RmqHelper.publishEvent('stock.opname.updated', {
+        data: response.data,
+        user: data.params.user.id,
+      });
+    }
+    return response;
+  }
+
+  @EventPattern('stock.opname.updated')
+  @Exempt()
+  async updateReplica(@Payload() data: any, @Ctx() context: RmqContext) {
+    await RmqHelper.handleMessageProcessing(
+      context,
+      async () => {
+        console.log('Captured Stock Opname Update Event', data);
+        await this.service.update(data.id, data.data, data.user);
+      },
+      {
+        queueName: 'stock.opname.updated',
+        useDLQ: true,
+        dlqRoutingKey: 'dlq.stock.opname.updated',
+        prisma: this.prisma,
+      },
+    )();
   }
 
   @MessagePattern({ cmd: 'post:stock-opname-detail/*' })
@@ -70,11 +136,41 @@ export class StockOpnameController {
     fe: ['inventory/stock-opname:edit', 'inventory/stock-opname:detail'],
   })
   async createDetail(@Payload() data: any): Promise<CustomResponse> {
-    return this.service.createDetail(
+    const response = await this.service.createDetail(
       data.params.id,
       data.body,
       data.params.user.id,
     );
+    if (response.success) {
+      RmqHelper.publishEvent('stock.opname.detail.created', {
+        stock_opname_id: data.params.id,
+        data: response.data,
+        user: data.params.user.id,
+      });
+    }
+    return response;
+  }
+
+  @EventPattern('stock.opname.detail.created')
+  @Exempt()
+  async createDetailReplica(@Payload() data: any, @Ctx() context: RmqContext) {
+    await RmqHelper.handleMessageProcessing(
+      context,
+      async () => {
+        console.log('Captured Stock Opname Detail Create Event', data);
+        await this.service.createDetail(
+          data.stock_opname_id,
+          data.data,
+          data.user,
+        );
+      },
+      {
+        queueName: 'stock.opname.detail.created',
+        useDLQ: true,
+        dlqRoutingKey: 'dlq.stock.opname.detail.created',
+        prisma: this.prisma,
+      },
+    )();
   }
 
   @MessagePattern({ cmd: 'delete:stock-opname/*' })
@@ -83,7 +179,35 @@ export class StockOpnameController {
     fe: ['inventory/stock-opname:delete'],
   })
   async delete(@Payload() data: any): Promise<CustomResponse> {
-    return this.service.delete(data.params.id, data.params.user.id);
+    const response = await this.service.delete(
+      data.params.id,
+      data.params.user.id,
+    );
+    if (response.success) {
+      RmqHelper.publishEvent('stock.opname.deleted', {
+        data: response.data,
+        user: data.params.user.id,
+      });
+    }
+    return response;
+  }
+
+  @EventPattern('stock.opname.deleted')
+  @Exempt()
+  async deleteReplica(@Payload() data: any, @Ctx() context: RmqContext) {
+    await RmqHelper.handleMessageProcessing(
+      context,
+      async () => {
+        console.log('Captured Stock Opname Delete Event', data);
+        await this.service.delete(data.data.id, data.user);
+      },
+      {
+        queueName: 'stock.opname.deleted',
+        useDLQ: true,
+        dlqRoutingKey: 'dlq.stock.opname.deleted',
+        prisma: this.prisma,
+      },
+    )();
   }
 
   @MessagePattern({ cmd: 'put:stock-opname-approve/*' })
@@ -92,7 +216,35 @@ export class StockOpnameController {
     fe: ['inventory/stock-opname:approve'],
   })
   async approve(@Payload() data: any): Promise<CustomResponse> {
-    return this.service.approve(data.params.id, data.params.user.id);
+    const response = await this.service.approve(
+      data.params.id,
+      data.params.user.id,
+    );
+    if (response.success) {
+      RmqHelper.publishEvent('stock.opname.approved', {
+        data: response.data,
+        user: data.params.user.id,
+      });
+    }
+    return response;
+  }
+
+  @EventPattern('stock.opname.approved')
+  @Exempt()
+  async approveReplica(@Payload() data: any, @Ctx() context: RmqContext) {
+    await RmqHelper.handleMessageProcessing(
+      context,
+      async () => {
+        console.log('Captured Stock Opname Approve Event', data);
+        await this.service.approve(data.data.id, data.user);
+      },
+      {
+        queueName: 'stock.opname.approved',
+        useDLQ: true,
+        dlqRoutingKey: 'dlq.stock.opname.approved',
+        prisma: this.prisma,
+      },
+    )();
   }
 
   @MessagePattern({ cmd: 'put:stock-opname-disapprove/*' })
@@ -101,6 +253,34 @@ export class StockOpnameController {
     fe: ['inventory/stock-opname:disapprove'],
   })
   async disapprove(@Payload() data: any): Promise<CustomResponse> {
-    return this.service.disapprove(data.params.id, data.params.user.id);
+    const response = await this.service.disapprove(
+      data.params.id,
+      data.params.user.id,
+    );
+    if (response.success) {
+      RmqHelper.publishEvent('stock.opname.disapproved', {
+        data: response.data,
+        user: data.params.user.id,
+      });
+    }
+    return response;
+  }
+
+  @EventPattern('stock.opname.disapproved')
+  @Exempt()
+  async disapproveReplica(@Payload() data: any, @Ctx() context: RmqContext) {
+    await RmqHelper.handleMessageProcessing(
+      context,
+      async () => {
+        console.log('Captured Stock Opname Disapprove Event', data);
+        await this.service.disapprove(data.data.id, data.user);
+      },
+      {
+        queueName: 'stock.opname.disapproved',
+        useDLQ: true,
+        dlqRoutingKey: 'dlq.stock.opname.disapproved',
+        prisma: this.prisma,
+      },
+    )();
   }
 }

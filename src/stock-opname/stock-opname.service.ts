@@ -8,6 +8,7 @@ import { StockOpnameDetailRepository } from 'src/repositories/stock-opname-detai
 import { CustomResponse } from 'src/exception/dto/custom-response.dto';
 import { ProductCodeRepository } from 'src/repositories/product-code.repository';
 import { ClientProxy } from '@nestjs/microservices';
+import { RmqHelper } from 'src/helper/rmq.helper';
 
 @Injectable()
 export class StockOpnameService extends BaseService {
@@ -243,10 +244,18 @@ export class StockOpnameService extends BaseService {
     // ]
 
     if (stockNotScanned.length > 0) {
-      this.financeClient.emit(
-        { cmd: 'stock_opname_approved' },
-        { stockNotScanned, id: updateStockOpname.id, trans_date: new Date() },
-      );
+      RmqHelper.publishEvent('stock.opname.approved', {
+        data: {
+          stockNotScanned,
+          id: updateStockOpname.id,
+          trans_date: new Date(),
+        },
+        user: approve_by,
+      });
+      // this.financeClient.emit(
+      //   { cmd: 'stock_opname_approved' },
+      //   { stockNotScanned, id: updateStockOpname.id, trans_date: new Date() },
+      // );
     }
 
     return CustomResponse.success(
@@ -279,10 +288,14 @@ export class StockOpnameService extends BaseService {
       id,
       scanned,
     );
-    this.financeClient.emit(
-      { cmd: 'stock_opname_disapproved' },
-      { stockNotScanned, id },
-    );
+    RmqHelper.publishEvent('stock.opname.disapproved', {
+      data: { stockNotScanned, id },
+      user: disapprove_by,
+    });
+    // this.financeClient.emit(
+    //   { cmd: 'stock_opname_disapproved' },
+    //   { stockNotScanned, id },
+    // );
 
     return CustomResponse.success(
       'Successfully dissaprove stock opname',

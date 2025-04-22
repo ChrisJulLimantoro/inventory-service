@@ -65,6 +65,14 @@ export abstract class BaseService {
     return CustomResponse.success('Data found!', data, 200);
   }
 
+  async createReplica(data: any, user_id?: string): Promise<CustomResponse> {
+    const newData = await this.repository.create(data, user_id);
+    if (!newData) {
+      return CustomResponse.error('Failed to create new data', null, 500);
+    }
+    return CustomResponse.success('New Data Created!', newData, 201);
+  }
+
   // Update
   async update(
     id: string,

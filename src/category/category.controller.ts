@@ -1,15 +1,24 @@
 import { Controller, Inject } from '@nestjs/common';
-import { ClientProxy, MessagePattern, Payload } from '@nestjs/microservices';
+import {
+  ClientProxy,
+  Ctx,
+  EventPattern,
+  MessagePattern,
+  Payload,
+  RmqContext,
+} from '@nestjs/microservices';
 import { Describe } from 'src/decorator/describe.decorator';
 import { CustomResponse } from 'src/exception/dto/custom-response.dto';
 import { CategoryService } from './category.service';
+import { RmqHelper } from 'src/helper/rmq.helper';
+import { PrismaService } from 'src/prisma/prisma.service';
+import { Exempt } from 'src/decorator/exempt.decorator';
 
 @Controller('category')
 export class CategoryController {
   constructor(
     private readonly service: CategoryService,
-    @Inject('MARKETPLACE') private readonly marketplaceClient: ClientProxy,
-    @Inject('TRANSACTION') private readonly transactionClient: ClientProxy,
+    private readonly prisma: PrismaService,
   ) {}
 
   @MessagePattern({ cmd: 'get:category' })
@@ -70,13 +79,30 @@ export class CategoryController {
 
     const response = await this.service.create(createData, data.params.user.id);
     if (response.success) {
-      this.marketplaceClient.emit(
-        { service: 'marketplace', module: 'category', action: 'create' },
-        response.data,
-      );
-      this.transactionClient.emit({ cmd: 'category_created' }, response.data);
+      RmqHelper.publishEvent('category.created', {
+        data: response.data,
+        user: data.params.user.id,
+      });
     }
     return response;
+  }
+
+  @EventPattern('category.created')
+  @Exempt()
+  async createReplica(@Payload() data: any, @Ctx() context: RmqContext) {
+    await RmqHelper.handleMessageProcessing(
+      context,
+      async () => {
+        console.log('Captured Category Create Event', data);
+        await this.service.createReplica(data.data, data.user);
+      },
+      {
+        queueName: 'category.created',
+        useDLQ: true,
+        dlqRoutingKey: 'dlq.category.created',
+        prisma: this.prisma,
+      },
+    )();
   }
 
   @MessagePattern({ cmd: 'put:category/*' })
@@ -90,13 +116,30 @@ export class CategoryController {
       data.params.user.id,
     );
     if (response.success) {
-      this.marketplaceClient.emit(
-        { service: 'marketplace', module: 'category', action: 'update' },
-        response.data,
-      );
-      this.transactionClient.emit({ cmd: 'category_updated' }, response.data);
+      RmqHelper.publishEvent('category.updated', {
+        data: response.data,
+        user: data.params.user.id,
+      });
     }
     return response;
+  }
+
+  @EventPattern('category.updated')
+  @Exempt()
+  async updateReplica(@Payload() data: any, @Ctx() context: RmqContext) {
+    console.log('Captured Category Update Event', data);
+    await RmqHelper.handleMessageProcessing(
+      context,
+      async () => {
+        return await this.service.update(data.data.id, data.data, data.user);
+      },
+      {
+        queueName: 'category.updated',
+        useDLQ: true,
+        dlqRoutingKey: 'dlq.category.updated',
+        prisma: this.prisma,
+      },
+    )();
   }
 
   @MessagePattern({ cmd: 'delete:category/*' })
@@ -105,16 +148,30 @@ export class CategoryController {
     const param = data.params;
     const response = await this.service.delete(param.id, param.user.id);
     if (response.success) {
-      this.marketplaceClient.emit(
-        { service: 'marketplace', module: 'category', action: 'softdelete' },
-        { id: response.data.id },
-      );
-      this.transactionClient.emit(
-        { cmd: 'category_deleted' },
-        response.data.id,
-      );
+      RmqHelper.publishEvent('category.deleted', {
+        data: response.data.id,
+        user: data.params.user.id,
+      });
     }
     return response;
+  }
+
+  @EventPattern('category.deleted')
+  @Exempt()
+  async deleteReplica(@Payload() data: any, @Ctx() context: RmqContext) {
+    console.log('Captured Category Delete Event', data);
+    await RmqHelper.handleMessageProcessing(
+      context,
+      async () => {
+        return await this.service.delete(data.data.id, data.user);
+      },
+      {
+        queueName: 'category.deleted',
+        useDLQ: true,
+        dlqRoutingKey: 'dlq.category.deleted',
+        prisma: this.prisma,
+      },
+    )();
   }
 
   @MessagePattern({ cmd: 'get:price-category' })
