@@ -55,7 +55,7 @@ export class PriceController {
 
     const response = await this.service.bulkCreate(
       createData,
-      data.param.user.id,
+      data.params.user.id,
     );
     if (response.success) {
       response.data.forEach((item) => {
