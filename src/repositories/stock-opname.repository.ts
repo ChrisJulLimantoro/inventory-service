@@ -32,8 +32,8 @@ export class StockOpnameRepository extends BaseRepository<any> {
           },
         },
         status: {
-          in: [0,2]
-        }
+          in: [0, 2],
+        },
       }).then((res) => res.data.data);
       const result = AllProductCode.filter(
         (productCode) => !reformatScanned.includes(productCode.id)

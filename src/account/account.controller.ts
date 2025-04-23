@@ -15,6 +15,7 @@ export class AccountController {
   @EventPattern('account.created')
   @Exempt()
   async accountCreated(@Payload() data: any, @Ctx() context: RmqContext) {
+    data = data.data; // Assuming the data is wrapped in a 'data' field
     await RmqHelper.handleMessageProcessing(
       context,
       () => this.service.create(data),
@@ -30,6 +31,7 @@ export class AccountController {
   @EventPattern('account.updated')
   @Exempt()
   async accountUpdated(@Payload() data: any, @Ctx() context: RmqContext) {
+    data = data.data; // Assuming the data is wrapped in a 'data' field
     await RmqHelper.handleMessageProcessing(
       context,
       () => this.service.update(data.id, data),
@@ -45,6 +47,7 @@ export class AccountController {
   @EventPattern('account.deleted')
   @Exempt()
   async accountDeleted(@Payload() data: any, @Ctx() context: RmqContext) {
+    data = data.data; // Assuming the data is wrapped in a 'data' field
     await RmqHelper.handleMessageProcessing(
       context,
       () => this.service.delete(data),

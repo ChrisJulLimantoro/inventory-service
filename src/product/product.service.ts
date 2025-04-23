@@ -175,6 +175,18 @@ export class ProductService extends BaseService {
     return CustomResponse.success('Product codes retrieved!', data, 200);
   }
 
+  private mergeDateWithCurrentTime(dateOnly: string | Date): Date {
+    const now = new Date();
+    const base = new Date(dateOnly); // tanggal dari user
+  
+    base.setHours(now.getHours());
+    base.setMinutes(now.getMinutes());
+    base.setSeconds(now.getSeconds());
+    base.setMilliseconds(now.getMilliseconds());
+  
+    return base;
+  }
+  
   async productCodeOut(data: Record<string, any>, user_id?: string) {
     const { date, taken_out_reason, codes, auth, params } = data;
     try {
@@ -197,7 +209,7 @@ export class ProductService extends BaseService {
             item.id,
             {
               status: 3,
-              taken_out_at: new Date(date),
+              taken_out_at: new Date(this.mergeDateWithCurrentTime(date)),
               taken_out_reason: Number(taken_out_reason),
               taken_out_by: params.user.id,
             },
@@ -208,7 +220,7 @@ export class ProductService extends BaseService {
             data: {
               productCode: code,
               reason: Number(taken_out_reason),
-              trans_date: new Date(date),
+              trans_date: new Date(this.mergeDateWithCurrentTime(date)),
             },
           });
           // this.financeClient.emit(

@@ -39,6 +39,7 @@ async function bootstrap() {
     'product.*',
     'operation.*',
     'stock.*',
+    'account.*',
   ];
   await RmqHelper.setupSubscriptionQueue(queueName, routingKeys);
 
