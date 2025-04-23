@@ -45,7 +45,7 @@ export class CategoryService extends BaseService {
     if (!category) {
       throw new Error('Category not found');
     }
-    if (category.types.some((type) => type.products.length > 0)) {
+    if (category.types.some((type) => type.products?.length > 0)) {
       throw new Error(
         'Cannot delete category with existing products, delete products first',
       );

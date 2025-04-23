@@ -163,7 +163,7 @@ export class CategoryController {
     await RmqHelper.handleMessageProcessing(
       context,
       async () => {
-        return await this.service.delete(data.data.id, data.user);
+        return await this.service.delete(data.data, data.user);
       },
       {
         queueName: 'category.deleted',
