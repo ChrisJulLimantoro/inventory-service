@@ -207,7 +207,7 @@ export class TypeController {
         createData,
         data.params.user.id,
       );
-      if (!responseCreate.success) {
+      if (responseCreate.success) {
         responseCreate.data.forEach((item) => {
           RmqHelper.publishEvent('type.created', {
             data: item,
