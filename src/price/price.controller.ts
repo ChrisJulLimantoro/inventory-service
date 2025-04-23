@@ -81,13 +81,13 @@ export class PriceController {
 
     const response = await this.service.bulkCreate(
       createData,
-      data.param.user.id,
+      data.params.user.id,
     );
     if (response.success) {
       response.data.forEach((item) => {
         RmqHelper.publishEvent('price.created', {
           data: item,
-          user: data.param.user.id,
+          user: data.params.user.id,
         });
       });
     }
