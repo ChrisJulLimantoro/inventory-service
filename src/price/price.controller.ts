@@ -81,13 +81,13 @@ export class PriceController {
 
     const response = await this.service.bulkCreate(
       createData,
-      data.param.user.id,
+      data.params.user.id,
     );
     if (response.success) {
       response.data.forEach((item) => {
         RmqHelper.publishEvent('price.created', {
           data: item,
-          user: data.param.user.id,
+          user: data.params.user.id,
         });
       });
     }
@@ -116,16 +116,13 @@ export class PriceController {
   @Describe({ description: 'Delete bulk price', fe: ['master/price:delete'] })
   async deleteBulk(@Payload() data: any): Promise<CustomResponse> {
     const id = data.params.id.split(';');
-    const response = await this.service.bulkDelete(
-      id[0],
-      id[1],
-      data.params.user.id,
-    );
+    const userId = data.params.user.id;
+    const response = await this.service.bulkDelete(id[0], id[1], userId);
     if (response.success) {
       response.data.forEach((data) => {
         RmqHelper.publishEvent('price.deleted', {
           data: data,
-          user: data.params.user.id,
+          user: userId,
         });
       });
     }

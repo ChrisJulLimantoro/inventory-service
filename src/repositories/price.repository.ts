@@ -25,7 +25,11 @@ export class PriceRepository extends BaseRepository<any> {
       return { message: 'No records found to delete', deleted: [] };
     }
 
-    await this.prisma.price.deleteMany({
+    await this.prisma.price.updateMany({
+      data: {
+        deleted_at: new Date(),
+        updated_at: new Date(),
+      },
       where: {
         type: {
           category_id: category_id,
