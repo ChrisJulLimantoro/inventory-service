@@ -178,15 +178,15 @@ export class ProductService extends BaseService {
   private mergeDateWithCurrentTime(dateOnly: string | Date): Date {
     const now = new Date();
     const base = new Date(dateOnly); // tanggal dari user
-  
+
     base.setHours(now.getHours());
     base.setMinutes(now.getMinutes());
     base.setSeconds(now.getSeconds());
     base.setMilliseconds(now.getMilliseconds());
-  
+
     return base;
   }
-  
+
   async productCodeOut(data: Record<string, any>, user_id?: string) {
     const { date, taken_out_reason, codes, auth, params } = data;
     try {
@@ -243,6 +243,18 @@ export class ProductService extends BaseService {
       const code = await this.productCodeRepository.findOne(item.id);
       // Product Code Out
       RmqHelper.publishEvent('product.code.out', {
+        data: {
+          id: item.id,
+          barcode: code.barcode,
+          product_id: code.product_id,
+          status: code.status,
+          weight: code.weight,
+          fixed_price: code.fixed_price,
+          taken_out_at: code.taken_out_at,
+        },
+        user: params.user.id,
+      });
+      RmqHelper.publishEvent('product.code.updated', {
         data: {
           id: item.id,
           barcode: code.barcode,
