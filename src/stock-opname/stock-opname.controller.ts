@@ -221,7 +221,7 @@ export class StockOpnameController {
       data.params.user.id,
     );
     if (response.success) {
-      RmqHelper.publishEvent('stock.opname.approved', {
+      RmqHelper.publishEvent('stock.opname.updated', {
         data: response.data,
         user: data.params.user.id,
       });
@@ -229,23 +229,23 @@ export class StockOpnameController {
     return response;
   }
 
-  @EventPattern('stock.opname.approved')
-  @Exempt()
-  async approveReplica(@Payload() data: any, @Ctx() context: RmqContext) {
-    await RmqHelper.handleMessageProcessing(
-      context,
-      async () => {
-        console.log('Captured Stock Opname Approve Event', data);
-        await this.service.approve(data.data.id, data.user);
-      },
-      {
-        queueName: 'stock.opname.approved',
-        useDLQ: true,
-        dlqRoutingKey: 'dlq.stock.opname.approved',
-        prisma: this.prisma,
-      },
-    )();
-  }
+  // @EventPattern('stock.opname.approved')
+  // @Exempt()
+  // async approveReplica(@Payload() data: any, @Ctx() context: RmqContext) {
+  //   await RmqHelper.handleMessageProcessing(
+  //     context,
+  //     async () => {
+  //       console.log('Captured Stock Opname Approve Event', data);
+  //       await this.service.approve(data.data.id, data.user);
+  //     },
+  //     {
+  //       queueName: 'stock.opname.approved',
+  //       useDLQ: true,
+  //       dlqRoutingKey: 'dlq.stock.opname.approved',
+  //       prisma: this.prisma,
+  //     },
+  //   )();
+  // }
 
   @MessagePattern({ cmd: 'put:stock-opname-disapprove/*' })
   @Describe({

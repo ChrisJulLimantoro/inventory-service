@@ -29,7 +29,6 @@ export class CategoryRepository extends BaseRepository<any> {
     page?: number;
     totalPages?: number;
   }> {
-    console.log('filter', filter);
     return super.findAll(filter, page, limit, sort, search);
 
     // // Find all companies owned by the given owner_id

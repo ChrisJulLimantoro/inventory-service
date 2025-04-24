@@ -9,7 +9,7 @@ async function bootstrap() {
     AppModule,
     {
       transport: Transport.TCP,
-      options: { port: Number(process.env.TCP_PORT || 3003) }, // Unique port for this TCP service
+      options: { port: Number(process.env.TCP_PORT || 3004) }, // Unique port for this TCP service
     },
   );
 
@@ -39,6 +39,7 @@ async function bootstrap() {
     'product.*',
     'operation.*',
     'stock.*',
+    'account.*',
   ];
   await RmqHelper.setupSubscriptionQueue(queueName, routingKeys);
 

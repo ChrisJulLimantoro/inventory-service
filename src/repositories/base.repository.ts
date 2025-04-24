@@ -15,6 +15,7 @@ export class BaseRepository<T> {
   async create(data: any, user_id?: string): Promise<T> {
     const created = await this.prisma[this.modelName].create({
       data,
+      include: this.relations,
     });
     await this.actionLog(this.modelName, created.id, 'CREATE', null, user_id);
     return created;
@@ -145,6 +146,7 @@ export class BaseRepository<T> {
     const updated = await this.prisma[this.modelName].update({
       where: this.isSoftDelete ? { id, deleted_at: null } : { id },
       data,
+      include: this.relations,
     });
     const diff = this.getDiff(before, updated);
     await this.actionLog(this.modelName, id, 'UPDATE', diff, user_id);
@@ -162,6 +164,7 @@ export class BaseRepository<T> {
     }
     return this.prisma[this.modelName].delete({
       where: { id },
+      include: this.relations,
     });
   }
 
