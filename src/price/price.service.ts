@@ -27,6 +27,25 @@ export class PriceService extends BaseService {
     return new UpdatePriceRequest(data);
   }
 
+  async bulkCreate(data: any, user_id?: string) {
+    // Check for duplicate time and date in bulkCreate of price
+    for (const d of data) {
+      const check = await this.priceRepository.findAll({
+        type_id: d.type_id,
+        date: d.date,
+      });
+      if (check.data.length > 0) {
+        return CustomResponse.error(
+          `Data already Exist for this date and type!`,
+          null,
+          400,
+        );
+      }
+    }
+
+    return super.bulkCreate(data, user_id);
+  }
+
   async bulkDelete(
     category_id: string,
     date: string,

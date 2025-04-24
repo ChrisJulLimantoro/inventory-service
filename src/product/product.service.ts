@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { BaseService } from 'src/base.service';
 import { ProductRepository } from 'src/repositories/product.repository';
 import { ValidationService } from 'src/validation/validation.service';
@@ -10,7 +10,6 @@ import { CreateProductCodeDto } from './dto/create-productCode.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UpdateProductCodeDto } from './dto/update-productCode.dto';
 import { QrService } from 'src/qr/qr.service';
-import { ClientProxy } from '@nestjs/microservices';
 import { RmqHelper } from 'src/helper/rmq.helper';
 
 @Injectable()
@@ -25,9 +24,6 @@ export class ProductService extends BaseService {
     protected readonly validation: ValidationService,
     protected readonly prisma: PrismaService,
     protected readonly qrService: QrService,
-    @Inject('TRANSACTION') private readonly transactionClient: ClientProxy,
-    @Inject('MARKETPLACE') private readonly marketplaceClient: ClientProxy,
-    @Inject('FINANCE') private readonly financeClient: ClientProxy,
   ) {
     super(validation);
   }

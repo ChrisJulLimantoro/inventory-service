@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { BaseService } from 'src/base.service';
 import { StockOpnameRepository } from 'src/repositories/stock-opname.repository';
 import { ValidationService } from 'src/validation/validation.service';
@@ -7,7 +7,6 @@ import { StockOpnameDetailDTO } from './dto/stock-opname-detail.dto';
 import { StockOpnameDetailRepository } from 'src/repositories/stock-opname-detail.repository';
 import { CustomResponse } from 'src/exception/dto/custom-response.dto';
 import { ProductCodeRepository } from 'src/repositories/product-code.repository';
-import { ClientProxy } from '@nestjs/microservices';
 import { RmqHelper } from 'src/helper/rmq.helper';
 
 @Injectable()
@@ -21,7 +20,6 @@ export class StockOpnameService extends BaseService {
     private readonly stockOpnameDetailRepository: StockOpnameDetailRepository,
     private readonly productCodeRepository: ProductCodeRepository,
     protected readonly validation: ValidationService,
-    @Inject('FINANCE') private readonly financeClient: ClientProxy,
   ) {
     super(validation);
   }
@@ -252,10 +250,6 @@ export class StockOpnameService extends BaseService {
         },
         user: approve_by,
       });
-      // this.financeClient.emit(
-      //   { cmd: 'stock_opname_approved' },
-      //   { stockNotScanned, id: updateStockOpname.id, trans_date: new Date() },
-      // );
     }
 
     return CustomResponse.success(
@@ -292,10 +286,6 @@ export class StockOpnameService extends BaseService {
       data: { stockNotScanned, id },
       user: disapprove_by,
     });
-    // this.financeClient.emit(
-    //   { cmd: 'stock_opname_disapproved' },
-    //   { stockNotScanned, id },
-    // );
 
     return CustomResponse.success(
       'Successfully dissaprove stock opname',

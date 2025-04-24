@@ -1,6 +1,5 @@
-import { Controller, Inject } from '@nestjs/common';
+import { Controller } from '@nestjs/common';
 import {
-  ClientProxy,
   Ctx,
   EventPattern,
   MessagePattern,

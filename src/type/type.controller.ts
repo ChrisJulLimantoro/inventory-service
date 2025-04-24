@@ -1,6 +1,5 @@
-import { Controller, Inject } from '@nestjs/common';
+import { Controller } from '@nestjs/common';
 import {
-  ClientProxy,
   Ctx,
   EventPattern,
   MessagePattern,
@@ -19,8 +18,6 @@ export class TypeController {
   constructor(
     private readonly service: TypeService,
     private readonly prisma: PrismaService,
-    @Inject('MARKETPLACE') private readonly marketplaceClient: ClientProxy,
-    @Inject('TRANSACTION') private readonly transactionClient: ClientProxy,
   ) {}
 
   @MessagePattern({ cmd: 'get:type' })
@@ -62,11 +59,6 @@ export class TypeController {
         data: response.data,
         user: data.params.user.id,
       });
-      // this.marketplaceClient.emit(
-      //   { service: 'marketplace', module: 'type', action: 'create' },
-      //   response.data,
-      // );
-      // this.transactionClient.emit({ cmd: 'type_created' }, response.data);
     }
     return response;
   }
@@ -103,11 +95,6 @@ export class TypeController {
         data: response.data,
         user: param.user.id,
       });
-      // this.marketplaceClient.emit(
-      //   { service: 'marketplace', module: 'type', action: 'update' },
-      //   response.data,
-      // );
-      // this.transactionClient.emit({ cmd: 'type_updated' }, response.data);
     }
     return response;
   }
@@ -143,11 +130,6 @@ export class TypeController {
         data: response.data.id,
         user: param.user.id,
       });
-      // this.marketplaceClient.emit(
-      //   { service: 'marketplace', module: 'type', action: 'softdelete' },
-      //   { id: response.data.id },
-      // );
-      // this.transactionClient.emit({ cmd: 'type_deleted' }, response.data.id);
     }
     return response;
   }
@@ -185,11 +167,6 @@ export class TypeController {
           data: item,
           user: data.params.user.id,
         });
-        // this.marketplaceClient.emit(
-        //   { service: 'marketplace', module: 'type', action: 'create' },
-        //   item,
-        // );
-        // this.transactionClient.emit({ cmd: 'type_created' }, item);
       });
     }
     return response;
@@ -213,11 +190,6 @@ export class TypeController {
             data: item,
             user: data.params.user.id,
           });
-          // this.marketplaceClient.emit(
-          //   { service: 'marketplace', module: 'type', action: 'create' },
-          //   item,
-          // );
-          // this.transactionClient.emit({ cmd: 'type_created' }, item);
         });
         return responseCreate;
       }
@@ -235,11 +207,6 @@ export class TypeController {
             data: item,
             user: data.params.user.id,
           });
-          // this.marketplaceClient.emit(
-          //   { service: 'marketplace', module: 'type', action: 'update' },
-          //   item,
-          // );
-          // this.transactionClient.emit({ cmd: 'type_updated' }, item);
         });
       }
       return response;

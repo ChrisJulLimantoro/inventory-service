@@ -258,7 +258,7 @@ export class StockOpnameController {
       data.params.user.id,
     );
     if (response.success) {
-      RmqHelper.publishEvent('stock.opname.disapproved', {
+      RmqHelper.publishEvent('stock.opname.updated', {
         data: response.data,
         user: data.params.user.id,
       });
@@ -266,21 +266,21 @@ export class StockOpnameController {
     return response;
   }
 
-  @EventPattern('stock.opname.disapproved')
-  @Exempt()
-  async disapproveReplica(@Payload() data: any, @Ctx() context: RmqContext) {
-    await RmqHelper.handleMessageProcessing(
-      context,
-      async () => {
-        console.log('Captured Stock Opname Disapprove Event', data);
-        await this.service.disapprove(data.data.id, data.user);
-      },
-      {
-        queueName: 'stock.opname.disapproved',
-        useDLQ: true,
-        dlqRoutingKey: 'dlq.stock.opname.disapproved',
-        prisma: this.prisma,
-      },
-    )();
-  }
+  // @EventPattern('stock.opname.disapproved')
+  // @Exempt()
+  // async disapproveReplica(@Payload() data: any, @Ctx() context: RmqContext) {
+  //   await RmqHelper.handleMessageProcessing(
+  //     context,
+  //     async () => {
+  //       console.log('Captured Stock Opname Disapprove Event', data);
+  //       await this.service.disapprove(data.data.id, data.user);
+  //     },
+  //     {
+  //       queueName: 'stock.opname.disapproved',
+  //       useDLQ: true,
+  //       dlqRoutingKey: 'dlq.stock.opname.disapproved',
+  //       prisma: this.prisma,
+  //     },
+  //   )();
+  // }
 }

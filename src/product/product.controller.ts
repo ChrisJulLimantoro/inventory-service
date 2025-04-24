@@ -1,6 +1,5 @@
-import { Controller, Inject } from '@nestjs/common';
+import { Controller } from '@nestjs/common';
 import {
-  ClientProxy,
   Ctx,
   EventPattern,
   MessagePattern,
@@ -18,9 +17,6 @@ export class ProductController {
   constructor(
     private readonly service: ProductService,
     private readonly prisma: PrismaService,
-    @Inject('MARKETPLACE') private readonly marketplaceClient: ClientProxy,
-    @Inject('TRANSACTION') private readonly transactionClient: ClientProxy,
-    @Inject('FINANCE') private readonly financeClient: ClientProxy,
   ) {}
 
   @MessagePattern({ cmd: 'get:product' })
