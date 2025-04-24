@@ -2,10 +2,9 @@ import { Module } from '@nestjs/common';
 import { PriceController } from './price.controller';
 import { PriceService } from './price.service';
 import { PriceRepository } from 'src/repositories/price.repository';
-import { SharedModule } from 'src/shared.module';
 
 @Module({
-  imports: [SharedModule],
+  imports: [],
   controllers: [PriceController],
   providers: [PriceService, PriceRepository],
 })
