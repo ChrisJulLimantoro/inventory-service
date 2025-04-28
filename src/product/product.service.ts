@@ -247,6 +247,7 @@ export class ProductService extends BaseService {
           weight: code.weight,
           fixed_price: code.fixed_price,
           taken_out_at: code.taken_out_at,
+          buy_price: code.buy_price,
         },
         user: params.user.id,
       });
@@ -259,6 +260,7 @@ export class ProductService extends BaseService {
           weight: code.weight,
           fixed_price: code.fixed_price,
           taken_out_at: code.taken_out_at,
+          buy_price: code.buy_price,
         },
         user: params.user.id,
       });
@@ -333,6 +335,7 @@ export class ProductService extends BaseService {
         weight: code.weight,
         fixed_price: code.fixed_price,
         taken_out_at: null,
+        buy_price: code.buy_price,
       },
       user: user_id,
     });
@@ -482,6 +485,7 @@ export class ProductService extends BaseService {
             weight: weight,
             fixed_price: code.fixed_price,
             taken_out_at: null,
+            buy_price: code.buy_price,
           },
           user: user_id,
         });
