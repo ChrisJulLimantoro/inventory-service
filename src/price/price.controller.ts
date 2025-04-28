@@ -77,9 +77,10 @@ export class PriceController {
   @Describe({ description: 'Create bulk price', fe: ['master/price:add'] })
   async createBulk(@Payload() data: any): Promise<CustomResponse> {
     const createData = data.body;
+    console.log('this is created data', createData);
 
     const response = await this.service.bulkCreate(
-      createData,
+      createData.data,
       data.params.user.id,
     );
     if (response.success) {
