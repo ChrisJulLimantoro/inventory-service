@@ -240,8 +240,28 @@ export class StockOpnameService extends BaseService {
     //   }
     // }
     // ]
-
     if (stockNotScanned.length > 0) {
+      // publish to Others
+      for (const stock of stockNotScanned) {
+        await this.productCodeRepository.update(stock.id, {
+          status: 3,
+          taken_out_at: new Date(),
+          taken_out_reason: 2,
+          taken_out_by: approve_by,
+        });
+        RmqHelper.publishEvent('product.code.updated', {
+          data: {
+            ...stock,
+            status: 3,
+            taken_out_at: new Date(),
+            taken_out_reason: 2,
+            taken_out_by: approve_by,
+            updated_at: new Date(),
+          },
+          user: approve_by,
+        });
+      }
+
       RmqHelper.publishEvent('stock.opname.approved', {
         data: {
           stockNotScanned,
