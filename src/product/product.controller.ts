@@ -216,6 +216,7 @@ export class ProductController {
       body,
       param.user.id,
     );
+    console.log('Response generate product code ' + response.success);
     if (response.success) {
       response.data.transref_id = body.transref_id;
       response.data.store_id = body.store_id;
@@ -223,6 +224,7 @@ export class ProductController {
         data: response.data,
         user: param.user.id,
       });
+      console.log('published');
     }
     return response;
   }
@@ -420,7 +422,7 @@ export class ProductController {
       context,
       async () => {
         const response = await this.service.updateProductCode(
-          data.id,
+          data.data.id,
           data.data,
         );
         if (!response.success) throw new Error('Company update failed');

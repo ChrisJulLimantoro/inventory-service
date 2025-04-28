@@ -28,9 +28,20 @@ export class PriceService extends BaseService {
   }
 
   async bulkCreate(data: any, user_id?: string) {
+    console.log(data);
+    const priceDataArray = Object.values(data).filter(
+      (item): item is { type_id: string; price: string; date: string } =>
+        !!(
+          item &&
+          typeof item === 'object' &&
+          'type_id' in item &&
+          'price' in item &&
+          'date' in item
+        ),
+    );
+
     // Check for duplicate time and date in bulkCreate of price
-    console.log('this is bulkcraete data',data);
-    for (const d of data) {
+    for (const d of priceDataArray) {
       const check = await this.priceRepository.findAll({
         type_id: d.type_id,
         date: d.date,
