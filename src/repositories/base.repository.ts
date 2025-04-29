@@ -63,7 +63,7 @@ export class BaseRepository<T> {
         ? new Date(filter.date.start)
         : new Date(0);
       const endDate = filter.date.end ? new Date(filter.date.end) : new Date();
-
+      endDate.setHours(23, 59, 59, 999);
       dateFilter = {
         [dateField]: {
           gte: startDate,
