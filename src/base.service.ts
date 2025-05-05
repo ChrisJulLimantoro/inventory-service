@@ -49,6 +49,7 @@ export abstract class BaseService {
       sort,
       search,
     );
+    console.log('category get', data);
     // const transform = {
     //   ...data,
     //   data: this.transformPrismaArray(data.data),
