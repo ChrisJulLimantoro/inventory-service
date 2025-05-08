@@ -77,6 +77,18 @@ export class ProductController {
     return response;
   }
 
+  @MessagePattern({ cmd: 'get:print-product-qr/*' })
+  @Describe({
+    description: 'Get product QR code',
+    fe: ['inventory/product:edit', 'inventory/product:detail'],
+  })
+  async getProductQRCode(@Payload() data: any) {
+    const param = data.params;
+    const response = await this.service.printQRCode(param.id);
+
+    return response;
+  }
+
   @EventPattern('product.created')
   @Exempt()
   async createReplica(@Payload() data: any, @Ctx() context: any) {

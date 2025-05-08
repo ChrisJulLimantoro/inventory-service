@@ -11,6 +11,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { UpdateProductCodeDto } from './dto/update-productCode.dto';
 import { QrService } from 'src/qr/qr.service';
 import { RmqHelper } from 'src/helper/rmq.helper';
+import * as htmlPdf from 'html-pdf';
 
 @Injectable()
 export class ProductService extends BaseService {
@@ -377,6 +378,97 @@ export class ProductService extends BaseService {
     const qr_code_data = `${code.barcode};${code.id}`;
     const qr = await this.qrService.generateQRCode(qr_code_data);
     return CustomResponse.success('QR Product code generated!', qr, 200);
+  }
+
+  async printQRCode(product_id: any) {
+    const product = await this.repository.findOne(product_id);
+    if (!product) {
+      throw new Error('Product not found');
+    }
+
+    await Promise.all(
+      product.product_codes
+        .filter((item) => item.deleted_at == null)
+        .map(async (item) => {
+          const qr_code_data = `${item.barcode};${item.id}`;
+          const qr = await this.qrService.generateQRCode(qr_code_data);
+          item.qr = qr;
+        }),
+    );
+
+    // Ensure product has product codes
+    if (product.product_codes.length === 0) {
+      throw new Error('There are no product codes to print');
+    }
+
+    // Generate PDF
+    const pdfBuffer = await this.generatePDF(
+      product.product_codes,
+      product.name,
+      product.store.name,
+    );
+
+    return pdfBuffer; // Return the raw PDF buffer directly
+  }
+
+  async generatePDF(
+    codes: any,
+    product_name: string,
+    store_name: string,
+  ): Promise<Buffer> {
+    const htmlContent = `
+      <!doctype html>
+      <html>
+        <head>
+          <style>
+            body { font-family: Arial, sans-serif; }
+            .container { width: 100%; }
+            .table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+            .table td { width: 20%; padding: 10px; text-align: center; border: 1px solid #000; }
+            .qr-img { width: 60px; height: 60px; }
+            .code-text { margin-top: 3px; font-size: 8px; }
+            .title { font-size: 18px; font-weight: bold; margin-bottom: 5px; }
+            p { font-size: 12px; font-weight:bold; margin-bottom: 1px; }
+          </style>
+        </head>
+        <body>
+          <h2 class="title">Product Code QR</h2>
+          <p>Generated on: ${new Date().toLocaleString()}</p>
+          <p>Store: ${store_name}</p>
+          <p>Product: ${product_name}</p>
+          <div class="container">
+            <table class="table">
+              <tr>
+                ${codes
+                  .map((item, index) => {
+                    const isNewRow = index % 5 === 0;
+                    const isEndRow = (index + 1) % 5 === 0;
+                    const qrCell = `
+                      <td>
+                        <img class="qr-img" src="${item.qr}" alt="QR Code" />
+                        <div class="code-text">${item.barcode}</div>
+                      </td>`;
+                    return `${isNewRow ? '<tr>' : ''}${qrCell}${isEndRow ? '</tr>' : ''}`;
+                  })
+                  .join('')}
+              </tr>
+            </table>
+          </div>
+        </body>
+      </html>`;
+
+    const pdfOptions = {
+      format: 'A4',
+      orientation: 'portrait',
+      border: '10mm',
+    };
+
+    return new Promise((resolve, reject) => {
+      htmlPdf.create(htmlContent, pdfOptions).toBuffer((err, buffer) => {
+        if (err) return reject(err);
+        resolve(buffer);
+      });
+    });
   }
 
   async updateProductCode(
