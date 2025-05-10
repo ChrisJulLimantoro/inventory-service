@@ -686,4 +686,38 @@ export class ProductService extends BaseService {
     // Only public information [i Think ???]
     return CustomResponse.success('Product code retrieved!', data, 200);
   }
+
+  async getProductCodeById(id: string) {
+    const code = await this.productCodeRepository.findOne(id);
+    if (!code) {
+      throw new Error('Product code not found');
+    }
+    // Get price information
+    const store = await this.prisma.store.findUnique({
+      where: {
+        id: code.product.store_id,
+        deleted_at: null,
+        is_active: true,
+      },
+      select: {
+        id: true,
+        is_active: true,
+        is_flex_price: true,
+        is_float_price: true,
+      },
+    });
+    if (!store) {
+      throw new Error('Store not found');
+    }
+
+    const data = {
+      ...code,
+      price: store.is_float_price
+        ? code.product.type.prices[0].price
+        : code.fixed_price,
+    };
+
+    // Only public information [i Think ???]
+    return CustomResponse.success('Product code retrieved!', data, 200);
+  }
 }

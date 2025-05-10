@@ -25,10 +25,11 @@ export class ProductController {
     const { page, limit, sort, search } = data.body;
     var filter: any = {
       store: {
-        company: {
-          id: data.body.company_id ?? data.body.auth.company_id,
-          owner_id: data.body.owner_id,
-        },
+        // company: {
+        //   id: data.body.company_id ?? data.body.auth.company_id,
+        //   owner_id: data.body.owner_id,
+        // },
+        id: data.body.auth.store_id,
       },
     };
 
@@ -263,6 +264,22 @@ export class ProductController {
     )();
   }
 
+  @MessagePattern({ cmd: 'get:product-code/*' })
+  @Describe({
+    description: 'Get product code by id',
+    fe: [
+      'inventory/product-code:edit',
+      'inventory/product-code:add',
+      'inventory/product-code:detail',
+    ],
+  })
+  async getProductCodeById(@Payload() data: any): Promise<CustomResponse> {
+    const param = data.params;
+    const body = data.body;
+    const response = await this.service.getProductCodeById(param.id);
+    return response;
+  }
+
   @MessagePattern({ cmd: 'get:check-product/*' })
   @Describe({
     description: 'Check product code',
@@ -270,12 +287,6 @@ export class ProductController {
   })
   async checkProductCode(@Payload() data: any): Promise<CustomResponse> {
     const param = data.params;
-    const body = data.body;
-    const filter = {
-      product: {
-        store_id: body.store_id,
-      },
-    };
     const response = await this.service.checkProduct(param.id);
     return response;
   }
@@ -423,6 +434,28 @@ export class ProductController {
     } catch (e) {
       return CustomResponse.error(e.message, null, 400);
     }
+  }
+
+  @MessagePattern({ cmd: 'put:product-code/*' })
+  @Describe({
+    description: 'Update product code',
+    fe: ['inventory/product-code:edit'],
+  })
+  async updateProductCode(@Payload() data: any): Promise<CustomResponse> {
+    const param = data.params;
+    const body = data.body;
+    const response = await this.service.updateProductCode(
+      param.id,
+      body,
+      param.user.id,
+    );
+    if (response.success) {
+      RmqHelper.publishEvent('product.code.updated', {
+        data: response.data,
+        user: param.user.id,
+      });
+    }
+    return response;
   }
 
   @EventPattern('product.code.updated')
