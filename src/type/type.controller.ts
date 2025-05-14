@@ -30,6 +30,7 @@ export class TypeController {
     ],
   })
   async findAll(@Payload() data: any): Promise<CustomResponse> {
+    console.log('find all type data', data);
     var filter: any = {
       category: {
         company: {
@@ -40,6 +41,9 @@ export class TypeController {
     };
     if (data.body.category_id && data.body.category_id != '') {
       filter.category_id = data.body.category_id;
+    }
+    if (data.body.code) {
+      filter.code = data.body.code;
     }
 
     return this.service.findAll(filter);
