@@ -5,32 +5,31 @@ import { RPCExceptionFilter } from './exception/rpc-exception.filter';
 import { RmqHelper } from './helper/rmq.helper';
 
 async function bootstrap() {
-  const tcpService = await NestFactory.createMicroservice<MicroserviceOptions>(
-    AppModule,
-    {
-      transport: Transport.TCP,
-      options: {
-        host: process.env.TCP_HOST || 'localhost',
-        port: Number(process.env.TCP_PORT || '3004'),
-      }, // Unique port for this TCP service
+  const app = await NestFactory.create(AppModule);
+  app.useGlobalFilters(new RPCExceptionFilter());
+
+  // TCP Microservice
+  const tcpOptions: MicroserviceOptions = {
+    transport: Transport.TCP,
+    options: {
+      host: process.env.TCP_HOST || 'localhost',
+      port: Number(process.env.TCP_PORT ?? '3001'),
     },
-  );
+  };
+  const tcpService = app.connectMicroservice(tcpOptions);
 
-  // RabbitMQ Setup queue name
+  // RabbitMQ Microservice
   const queueName = process.env.RMQ_QUEUE_NAME || 'inventory_service_queue_1';
-  // Microservice 2 - RabbitMQ
-  const rabbitMQService =
-    await NestFactory.createMicroservice<MicroserviceOptions>(AppModule, {
-      transport: Transport.RMQ,
-      options: {
-        urls: [process.env.RMQ_URL || 'amqp://localhost:5672'],
-        queue: queueName,
-        noAck: false,
-        queueOptions: { durable: true },
-      },
-    });
-
-  tcpService.useGlobalFilters(new RPCExceptionFilter());
+  const rmqOptions: MicroserviceOptions = {
+    transport: Transport.RMQ,
+    options: {
+      urls: [process.env.RMQ_URL || 'amqp://localhost:5672'],
+      queue: queueName,
+      noAck: false,
+      queueOptions: { durable: true },
+    },
+  };
+  const rmqService = app.connectMicroservice(rmqOptions);
   // Setup the topic exhange
   const routingKeys = [
     'password.changed',
@@ -48,6 +47,8 @@ async function bootstrap() {
   await RmqHelper.setupSubscriptionQueue(queueName, routingKeys);
 
   // Start all services
-  await Promise.all([tcpService.listen(), rabbitMQService.listen()]);
+
+  await app.startAllMicroservices();
+  console.log('All microservices started successfully');
 }
 bootstrap();
