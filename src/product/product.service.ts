@@ -12,6 +12,7 @@ import { UpdateProductCodeDto } from './dto/update-productCode.dto';
 import { QrService } from 'src/qr/qr.service';
 import { RmqHelper } from 'src/helper/rmq.helper';
 import * as htmlPdf from 'html-pdf';
+import { RpcException } from '@nestjs/microservices';
 
 @Injectable()
 export class ProductService extends BaseService {
@@ -53,10 +54,10 @@ export class ProductService extends BaseService {
   async delete(id: string, user_id?: string): Promise<CustomResponse> {
     const product = await this.productRepository.findOne(id);
     if (!product) {
-      throw new Error('Product not found');
+      throw new RpcException('Product not found');
     }
     if (product.product_codes.some((code) => code.status > 0)) {
-      throw new Error('There are some product codes still active!');
+      throw new RpcException('There are some product codes still active!');
     }
 
     return super.delete(id, user_id);
@@ -73,7 +74,7 @@ export class ProductService extends BaseService {
   async generateProductCode(product_id: any, data: any, user_id?: string) {
     const product = await this.productRepository.findOne(product_id);
     if (!product) {
-      throw new Error('Product not found');
+      throw new RpcException('Product not found');
     }
     const count_codes = await this.productCodeRepository.count({
       product_id: product_id,
@@ -108,7 +109,7 @@ export class ProductService extends BaseService {
     };
     const code = await this.productCodeRepository.create(createData, user_id);
     if (!code) {
-      throw new Error('Failed to create product code');
+      throw new RpcException('Failed to create product code');
     }
     return CustomResponse.success('Product code created!', code, 201);
   }
@@ -137,7 +138,7 @@ export class ProductService extends BaseService {
       },
     });
     if (!store) {
-      throw new Error('Store not found');
+      throw new RpcException('Store not found');
     }
     try {
       page = Number(page) ?? 0;
@@ -191,14 +192,16 @@ export class ProductService extends BaseService {
         for (const item of codes) {
           const code = await this.productCodeRepository.findOne(item.id);
           if (!code) {
-            throw new Error(`Product code ${item.id} is invalid`); // item.id, because code is undefined
+            throw new RpcException(`Product code ${item.id} is invalid`); // item.id, because code is undefined
           }
           console.log(code.status);
           if (code.status !== 0) {
-            throw new Error(`Product code ${code.barcode} is not available`);
+            throw new RpcException(
+              `Product code ${code.barcode} is not available`,
+            );
           }
           if (code.product.store_id !== auth.store_id) {
-            throw new Error(
+            throw new RpcException(
               `Product code ${code.barcode} is not in this store`,
             );
           }
@@ -301,10 +304,10 @@ export class ProductService extends BaseService {
     const code = await this.productCodeRepository.findOne(id);
     try {
       if (!code) {
-        throw new Error('Product code not found');
+        throw new RpcException('Product code not found');
       }
       if (code.status !== 3) {
-        throw new Error('Product code not taken out');
+        throw new RpcException('Product code not taken out');
       }
       await this.productCodeRepository.update(
         id,
@@ -373,7 +376,7 @@ export class ProductService extends BaseService {
   async generateQRCode(product_code_id: any) {
     const code = await this.productCodeRepository.findOne(product_code_id);
     if (!code) {
-      throw new Error('Product code not found');
+      throw new RpcException('Product code not found');
     }
     const qr_code_data = `${code.barcode};${code.id}`;
     const qr = await this.qrService.generateQRCode(qr_code_data);
@@ -383,7 +386,7 @@ export class ProductService extends BaseService {
   async printQRCode(product_id: any) {
     const product = await this.repository.findOne(product_id);
     if (!product) {
-      throw new Error('Product not found');
+      throw new RpcException('Product not found');
     }
 
     await Promise.all(
@@ -398,7 +401,7 @@ export class ProductService extends BaseService {
 
     // Ensure product has product codes
     if (product.product_codes.length === 0) {
-      throw new Error('There are no product codes to print');
+      throw new RpcException('There are no product codes to print');
     }
 
     // Generate PDF
@@ -478,7 +481,7 @@ export class ProductService extends BaseService {
   ): Promise<CustomResponse> {
     const code = await this.productCodeRepository.findOne(id);
     if (!code) {
-      throw new Error('Product code not found');
+      throw new RpcException('Product code not found');
     }
     const validated = new UpdateProductCodeDto(data);
     const updateData = this.validation.validate(
@@ -492,12 +495,12 @@ export class ProductService extends BaseService {
   async deleteProductCode(id: any, user_id?: string) {
     const code = await this.productCodeRepository.findOne(id);
     if (!code) {
-      throw new Error('Product code not found');
+      throw new RpcException('Product code not found');
     }
     if ([1, 2].includes(code.status)) {
-      throw new Error('Product code still active in transaction!');
+      throw new RpcException('Product code still active in transaction!');
     } else if (code.status === 3) {
-      throw new Error('Product code still taken out!');
+      throw new RpcException('Product code still taken out!');
     }
     await this.productCodeRepository.delete(id, user_id);
     return CustomResponse.success('Product code deleted!', code, 200);
@@ -524,13 +527,13 @@ export class ProductService extends BaseService {
       },
     });
     if (!code) {
-      throw new Error('Product code not found');
+      throw new RpcException('Product code not found');
     }
     if (!store) {
-      throw new Error('Store not found');
+      throw new RpcException('Store not found');
     }
     if (store.id !== code.product.store_id) {
-      throw new Error('Product code not found in this store');
+      throw new RpcException('Product code not found in this store');
     }
     const data = {
       id: code.id,
@@ -553,10 +556,12 @@ export class ProductService extends BaseService {
       await this.prisma.$transaction(async (prisma) => {
         const code = await this.productCodeRepository.findOne(id);
         if (!code) {
-          throw new Error(`Product code ${id} is invalid`); // item.id, because code is undefined
+          throw new RpcException(`Product code ${id} is invalid`); // item.id, because code is undefined
         }
         if (code.product.store_id !== auth.store_id) {
-          throw new Error(`Product code ${code.barcode} is not in this store`);
+          throw new RpcException(
+            `Product code ${code.barcode} is not in this store`,
+          );
         }
         // TODOCEJE UPDATE STATUS
         await this.productCodeRepository.update(
@@ -581,18 +586,6 @@ export class ProductService extends BaseService {
           },
           user: user_id,
         });
-        // this.transactionClient.emit(
-        //   { cmd: 'product_code_updated' },
-        //   {
-        //     id: code.id,
-        //     barcode: code.barcode,
-        //     product_id: code.product_id,
-        //     status: 0,
-        //     weight: code.weight,
-        //     fixed_price: code.fixed_price,
-        //     taken_out_at: null,
-        //   },
-        // );
         // Add stock mutation (ELLA)
         RmqHelper.publishEvent('stock.repaired', {
           data: {
@@ -604,51 +597,11 @@ export class ProductService extends BaseService {
           },
           user: user_id,
         });
-        // this.financeClient.emit(
-        //   { cmd: 'stock_repaired' },
-        //   {
-        //     productCode: code,
-        //     trans_date: new Date(),
-        //     account_id,
-        //     weight,
-        //     expense,
-        //   },
-        // );
       });
     } catch (e) {
       console.error(e.message);
       return CustomResponse.error(e.message, null, 400);
     }
-
-    // FOR SYNC to other service TODOCEJE product code updated
-    // const code = await this.productCodeRepository.findOne(id);
-    // this.transactionClient.emit(
-    //   { cmd: 'product_code_updated' },
-    //   {
-    //     id: id,
-    //     barcode: code.barcode,
-    //     product_id: code.product_id,
-    //     status: code.status,
-    //     weight: code.weight,
-    //     fixed_price: code.fixed_price,
-    //     taken_out_at: code.taken_out_at,
-    //   },
-    // );
-    // this.marketplaceClient.emit(
-    //   {
-    //     module: 'product',
-    //     action: 'updateProductCode',
-    //   },
-    //   {
-    //     id: id,
-    //     barcode: code.barcode,
-    //     product_id: code.product_id,
-    //     status: code.status,
-    //     weight: code.weight,
-    //     fixed_price: code.fixed_price,
-    //     taken_out_at: code.taken_out_at,
-    //   },
-    // );
 
     return CustomResponse.success('Product code out!', null, 200);
   }
@@ -656,7 +609,7 @@ export class ProductService extends BaseService {
   async checkProduct(barcode: string) {
     const code = await this.productCodeRepository.getProductCode(barcode);
     if (!code) {
-      throw new Error('Product code not found');
+      throw new RpcException('Product code not found');
     }
     // Get price information
     const store = await this.prisma.store.findUnique({
@@ -673,7 +626,7 @@ export class ProductService extends BaseService {
       },
     });
     if (!store) {
-      throw new Error('Store not found');
+      throw new RpcException('Store not found');
     }
 
     const data = {
@@ -690,7 +643,7 @@ export class ProductService extends BaseService {
   async getProductCodeById(id: string) {
     const code = await this.productCodeRepository.findOne(id);
     if (!code) {
-      throw new Error('Product code not found');
+      throw new RpcException('Product code not found');
     }
     // Get price information
     const store = await this.prisma.store.findUnique({
@@ -707,7 +660,7 @@ export class ProductService extends BaseService {
       },
     });
     if (!store) {
-      throw new Error('Store not found');
+      throw new RpcException('Store not found');
     }
 
     const data = {

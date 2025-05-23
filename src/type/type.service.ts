@@ -6,6 +6,7 @@ import { CreateTypeRequest } from './dto/create-type.dto';
 import { UpdateTypeRequest } from './dto/update-type.dto';
 import { CustomResponse } from 'src/exception/dto/custom-response.dto';
 import { CategoryRepository } from 'src/repositories/category.repository';
+import { RpcException } from '@nestjs/microservices';
 
 @Injectable()
 export class TypeService extends BaseService {
@@ -159,10 +160,10 @@ export class TypeService extends BaseService {
   async delete(id: string, user_id?: string): Promise<CustomResponse> {
     const type = await this.typeRepository.findOne(id);
     if (!type) {
-      throw new Error('Type not found');
+      throw new RpcException('Type not found');
     }
     if (type.products.length > 0) {
-      throw new Error(
+      throw new RpcException(
         'Cannot delete type with associated products. Please remove the products first.',
       );
     }

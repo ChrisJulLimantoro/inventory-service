@@ -7,6 +7,7 @@ import { UpdateCategoryRequest } from './dto/update-category.dto';
 import { CompanyRepository } from 'src/repositories/company.repository';
 import { CustomResponse } from 'src/exception/dto/custom-response.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { RpcException } from '@nestjs/microservices';
 
 @Injectable()
 export class CategoryService extends BaseService {
@@ -43,10 +44,10 @@ export class CategoryService extends BaseService {
   async delete(id: string, user_id?: string): Promise<CustomResponse> {
     const category = await this.repository.findOne(id);
     if (!category) {
-      throw new Error('Category not found');
+      throw new RpcException('Category not found');
     }
     if (category.types.some((type) => type.products?.length > 0)) {
-      throw new Error(
+      throw new RpcException(
         'Cannot delete category with existing products, delete products first',
       );
     }

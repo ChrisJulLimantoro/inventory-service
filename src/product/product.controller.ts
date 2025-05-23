@@ -4,6 +4,7 @@ import {
   EventPattern,
   MessagePattern,
   Payload,
+  RpcException,
 } from '@nestjs/microservices';
 import { Describe } from 'src/decorator/describe.decorator';
 import { CustomResponse } from 'src/exception/dto/custom-response.dto';
@@ -98,7 +99,7 @@ export class ProductController {
       async () => {
         console.log('Captured Product Create Event', data);
         const response = await this.service.createReplica(data.data, data.user);
-        if (!response.success) throw new Error('Product create failed');
+        if (!response.success) throw new RpcException('Product create failed');
       },
       {
         queueName: 'product.created',
@@ -136,7 +137,7 @@ export class ProductController {
           data.data,
           data.user,
         );
-        if (!response.success) throw new Error('Product update failed');
+        if (!response.success) throw new RpcException('Product update failed');
       },
       {
         queueName: 'product.updated',
@@ -169,7 +170,7 @@ export class ProductController {
       async () => {
         console.log('Captured Product Delete Event', data);
         const response = await this.service.delete(data.data.id, data.user);
-        if (!response.success) throw new Error('Product delete failed');
+        if (!response.success) throw new RpcException('Product delete failed');
       },
       {
         queueName: 'product.deleted',
@@ -253,7 +254,8 @@ export class ProductController {
           data.data,
           data.user,
         );
-        if (!response.success) throw new Error('Product code create failed');
+        if (!response.success)
+          throw new RpcException('Product code create failed');
       },
       {
         queueName: 'product.code.created',
@@ -326,7 +328,8 @@ export class ProductController {
           data.data.id,
           data.user,
         );
-        if (!response.success) throw new Error('Product code delete failed');
+        if (!response.success)
+          throw new RpcException('Product code delete failed');
       },
       {
         queueName: 'product.code.deleted',
@@ -470,7 +473,7 @@ export class ProductController {
           data.data.id,
           data.data,
         );
-        if (!response.success) throw new Error('Company update failed');
+        if (!response.success) throw new RpcException('Company update failed');
       },
       {
         queueName: 'product.code.updated',

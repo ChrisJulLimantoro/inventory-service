@@ -8,6 +8,7 @@ import { StockOpnameDetailRepository } from 'src/repositories/stock-opname-detai
 import { CustomResponse } from 'src/exception/dto/custom-response.dto';
 import { ProductCodeRepository } from 'src/repositories/product-code.repository';
 import { RmqHelper } from 'src/helper/rmq.helper';
+import { RpcException } from '@nestjs/microservices';
 
 @Injectable()
 export class StockOpnameService extends BaseService {
@@ -35,14 +36,14 @@ export class StockOpnameService extends BaseService {
   async createDetail(id: string, data: any, user_id?: string) {
     const stockOpname = await this.stockOpnameRepository.findOne(id);
     if (!stockOpname) {
-      throw new Error('Stock Opname not found');
+      throw new RpcException('Stock Opname not found');
     }
 
     const productCode = await this.productCodeRepository.getProductCode(
       data.product_code,
     );
     if (!productCode) {
-      throw new Error('Product Code not found');
+      throw new RpcException('Product Code not found');
     }
 
     // Check if already created or not
@@ -51,7 +52,7 @@ export class StockOpnameService extends BaseService {
       product_code_id: productCode.id,
     });
     if (check.data.length > 0) {
-      throw new Error('Data already exist');
+      throw new RpcException('Data already exist');
     }
 
     data.stock_opname_id = id;
@@ -68,7 +69,7 @@ export class StockOpnameService extends BaseService {
       user_id,
     );
     if (!validate) {
-      throw new Error('Failed to create new data');
+      throw new RpcException('Failed to create new data');
     }
     return CustomResponse.success(stockOpnameDetail, 200);
   }
@@ -76,7 +77,7 @@ export class StockOpnameService extends BaseService {
   async delete(id: string, user_id?: string) {
     const stockOpname = await this.stockOpnameRepository.findOne(id);
     if (!stockOpname) {
-      throw new Error('Stock Opname not found');
+      throw new RpcException('Stock Opname not found');
     }
 
     await this.stockOpnameDetailRepository.deleteWhere({
@@ -94,7 +95,7 @@ export class StockOpnameService extends BaseService {
   async approve(id: string, approve_by: string): Promise<CustomResponse> {
     const stockOpname = await this.stockOpnameRepository.findOne(id);
     if (!stockOpname) {
-      throw new Error('Stock Opname not found');
+      throw new RpcException('Stock Opname not found');
     }
 
     // Add logic to check the approve by if needed!
@@ -282,7 +283,7 @@ export class StockOpnameService extends BaseService {
   async disapprove(id: string, disapprove_by: string): Promise<CustomResponse> {
     const stockOpname = await this.stockOpnameRepository.findOne(id);
     if (!stockOpname) {
-      throw new Error('Stock Opname not found');
+      throw new RpcException('Stock Opname not found');
     }
 
     // Add logic to check the disapprove by if needed!
