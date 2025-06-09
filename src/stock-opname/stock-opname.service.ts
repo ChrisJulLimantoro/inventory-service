@@ -80,10 +80,12 @@ export class StockOpnameService extends BaseService {
       throw new RpcException('Stock Opname not found');
     }
 
-    await this.stockOpnameDetailRepository.deleteWhere({
-      stock_opname_id: id,
+    await this.stockOpnameDetailRepository.deleteWhere(
+      {
+        stock_opname_id: id,
+      },
       user_id,
-    });
+    );
     const deleteStockOpname = await this.stockOpnameRepository.delete(
       id,
       user_id,

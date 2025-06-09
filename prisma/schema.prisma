@@ -230,7 +230,7 @@ model StockOpname {
   deleted_at DateTime?
 
   @@index([deleted_at])
-  @@unique([store_id,category_id, date])
+  @@unique([store_id,category_id, date, deleted_at])
   @@map("stock_opnames")
 }
 
