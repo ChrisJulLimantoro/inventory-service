@@ -130,25 +130,50 @@ export class StockOpnameController {
     )();
   }
 
-  @MessagePattern({ cmd: 'post:stock-opname-detail/*' })
+  @MessagePattern({ cmd: 'put:stock-opname-detail/*' })
   @Describe({
     description: 'Scan and modify Stock Opname Detail',
     fe: ['inventory/stock-opname:edit', 'inventory/stock-opname:detail'],
   })
-  async createDetail(@Payload() data: any): Promise<CustomResponse> {
-    const response = await this.service.createDetail(
+  async changeStatus(@Payload() data: any): Promise<CustomResponse> {
+    const response = await this.service.changeStatus(
       data.params.id,
-      data.body,
+      data.body.product_code_id,
+      data.body.scanned,
       data.params.user.id,
     );
     if (response.success) {
-      RmqHelper.publishEvent('stock.opname.detail.created', {
+      RmqHelper.publishEvent('stock.opname.detail.updated', {
         stock_opname_id: data.params.id,
-        data: response.data,
+        product_code_id: data.body.product_code_id,
+        scnaned: data.body.scanned,
         user: data.params.user.id,
       });
     }
     return response;
+  }
+
+  @EventPattern('stock.opname.detail.updated')
+  @Exempt()
+  async changeStatusReplica(@Payload() data: any, @Ctx() context: RmqContext) {
+    await RmqHelper.handleMessageProcessing(
+      context,
+      async () => {
+        console.log('Captured Stock Opname Detail Update Event', data);
+        await this.service.changeStatus(
+          data.stock_opname_id,
+          data.product_code_id,
+          data.scanned,
+          data.user,
+        );
+      },
+      {
+        queueName: 'stock.opname.detail.updated',
+        useDLQ: true,
+        dlqRoutingKey: 'dlq.stock.opname.detail.updated',
+        prisma: this.prisma,
+      },
+    )();
   }
 
   @EventPattern('stock.opname.detail.created')
@@ -158,11 +183,7 @@ export class StockOpnameController {
       context,
       async () => {
         console.log('Captured Stock Opname Detail Create Event', data);
-        await this.service.createDetail(
-          data.stock_opname_id,
-          data.data,
-          data.user,
-        );
+        await this.service.createDetail(data.data, data.user);
       },
       {
         queueName: 'stock.opname.detail.created',

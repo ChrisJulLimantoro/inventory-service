@@ -7,7 +7,7 @@ import { ProductService } from 'src/product/product.service';
 export class StockOpnameRepository extends BaseRepository<any> {
   constructor(
     prisma: PrismaService,
-    private readonly productService: ProductService
+    private readonly productService: ProductService,
   ) {
     const relations = {
       details: {
@@ -22,9 +22,10 @@ export class StockOpnameRepository extends BaseRepository<any> {
   }
 
   async findNotScanned(id: any, scanned: any) {
-      const stockOpname = await this.findOne(id);
-      const reformatScanned = scanned.map((scan) => scan.product_code_id);
-      const AllProductCode = await this.productService.getAllProductCode({
+    const stockOpname = await this.findOne(id);
+    const reformatScanned = scanned.map((scan) => scan.product_code_id);
+    const AllProductCode = await this.productService
+      .getAllProductCode({
         product: {
           store_id: stockOpname.store_id,
           type: {
@@ -34,11 +35,24 @@ export class StockOpnameRepository extends BaseRepository<any> {
         status: {
           in: [0, 2],
         },
-      }).then((res) => res.data.data);
-      const result = AllProductCode.filter(
-        (productCode) => !reformatScanned.includes(productCode.id)
-      );
+      })
+      .then((res) => res.data.data);
+    const result = AllProductCode.filter(
+      (productCode) => !reformatScanned.includes(productCode.id),
+    );
 
-      return result;
+    return result;
+  }
+
+  async getProductCodes(category_id: any) {
+    return this.prisma.productCode.findMany({
+      where: {
+        product: {
+          type: {
+            category_id: category_id,
+          },
+        },
+      },
+    });
   }
 }

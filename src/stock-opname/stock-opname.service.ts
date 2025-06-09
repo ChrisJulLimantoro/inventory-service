@@ -33,45 +33,71 @@ export class StockOpnameService extends BaseService {
     return new StockOpnameDTO(data);
   }
 
-  async createDetail(id: string, data: any, user_id?: string) {
-    const stockOpname = await this.stockOpnameRepository.findOne(id);
-    if (!stockOpname) {
-      throw new RpcException('Stock Opname not found');
+  async create(data: any, user_id?: string) {
+    const prod = await this.repository.getProductCodes(data.category_id);
+    if (!prod) {
+      return CustomResponse.error('There are no product code', [], 403, false);
+    }
+    const result = await super.create(data, user_id);
+
+    // Create the detail along the way
+    // get the product within those category
+    for (const p of prod) {
+      const data = await this.stockOpnameDetailRepository.create(
+        {
+          stock_opname_id: result.data.id,
+          product_code_id: p.id,
+          scanned: false,
+        },
+        user_id,
+      );
+      RmqHelper.publishEvent('stock.opname.detail.created', {
+        data: data,
+        user: user_id,
+      });
     }
 
-    const productCode = await this.productCodeRepository.getProductCode(
-      data.product_code,
-    );
-    if (!productCode) {
-      throw new RpcException('Product Code not found');
-    }
+    return result;
+  }
 
-    // Check if already created or not
+  async createDetail(data: any, user_id?: string) {
+    try {
+      const result = await this.stockOpnameDetailRepository.create(
+        {
+          data,
+        },
+        user_id,
+      );
+      return CustomResponse.success('Data Created', result);
+    } catch (e) {
+      return CustomResponse.error(e.message, e, 500);
+    }
+  }
+
+  async changeStatus(
+    id: string,
+    product_code_id: string,
+    scan: boolean,
+    user_id?: string,
+  ) {
     const check = await this.stockOpnameDetailRepository.findAll({
       stock_opname_id: id,
-      product_code_id: productCode.id,
+      product_code_id: product_code_id,
     });
-    if (check.data.length > 0) {
-      throw new RpcException('Data already exist');
+
+    if (check.data.length == 0) {
+      throw new RpcException('Product Code Not Valid');
     }
 
-    data.stock_opname_id = id;
-    data.product_code_id = productCode.id;
-
-    data = new StockOpnameDetailDTO(data);
-
-    const validate = await this.validation.validate(
-      data,
-      StockOpnameDetailDTO.createSchema(),
-    );
-    const stockOpnameDetail = await this.stockOpnameDetailRepository.create(
-      validate,
+    const result = await this.stockOpnameDetailRepository.update(
+      check.data[0].id,
+      {
+        scanned: scan,
+      },
       user_id,
     );
-    if (!validate) {
-      throw new RpcException('Failed to create new data');
-    }
-    return CustomResponse.success(stockOpnameDetail, 200);
+
+    return CustomResponse.success('Data updated', result);
   }
 
   async delete(id: string, user_id?: string) {
@@ -305,6 +331,7 @@ export class StockOpnameService extends BaseService {
       id,
       scanned,
     );
+    console.log('stock not scanned : ', stockNotScanned);
     RmqHelper.publishEvent('stock.opname.disapproved', {
       data: { stockNotScanned, id },
       user: disapprove_by,

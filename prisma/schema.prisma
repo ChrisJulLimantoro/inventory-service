@@ -92,6 +92,7 @@ model ProductCode {
   tax_purchase Decimal   @default(0) @db.Decimal
   image        String?
   account_id   String?   @db.Uuid //account_id used when purchase product code
+  certificate_link String?
 
   product Product @relation(fields: [product_id], references: [id])
   StockOpnameDetails StockOpnameDetail[]
