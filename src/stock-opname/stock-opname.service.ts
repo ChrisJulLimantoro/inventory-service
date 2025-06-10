@@ -139,7 +139,6 @@ export class StockOpnameService extends BaseService {
       approve_by,
     );
 
-    const scanned = updateStockOpname.details;
     // console.log('updateStockOpname', updateStockOpname)
     // updateStockOpname {
     //   id: 'c973fa13-9008-4d29-9016-8e5daf8feb20',
@@ -228,11 +227,6 @@ export class StockOpnameService extends BaseService {
     //   }
     // }
 
-    console.log('scanned', scanned);
-    const stockNotScanned = await this.stockOpnameRepository.findNotScanned(
-      id,
-      scanned,
-    ); // and status is in stock or bought back
     // console.log('this is stock not scanned',stockNotScanned);
     // this is stock not scanned [
     //   {
@@ -269,37 +263,40 @@ export class StockOpnameService extends BaseService {
     //   }
     // }
     // ]
-    if (stockNotScanned.length > 0) {
+    console.log('this is stock details', updateStockOpname.details);
       // publish to Others
-      for (const stock of stockNotScanned) {
-        await this.productCodeRepository.update(stock.id, {
+    const productsLost = [];
+    for (const stock of updateStockOpname.details) {
+      if (!stock.scanned && stock.productCode.status == 0) {
+        const prodCode =  await this.productCodeRepository.update(stock.product_code_id, {
           status: 3,
           taken_out_at: new Date(),
-          taken_out_reason: 2,
+          taken_out_reason: 4, // lost karena opname
           taken_out_by: approve_by,
         });
         RmqHelper.publishEvent('product.code.updated', {
           data: {
-            ...stock,
+            ...prodCode,
             status: 3,
             taken_out_at: new Date(),
-            taken_out_reason: 2,
+            taken_out_reason: 4,
             taken_out_by: approve_by,
             updated_at: new Date(),
           },
           user: approve_by,
         });
+        productsLost.push(prodCode);
       }
-
-      RmqHelper.publishEvent('stock.opname.approved', {
-        data: {
-          stockNotScanned,
-          id: updateStockOpname.id,
-          trans_date: new Date(),
-        },
-        user: approve_by,
-      });
     }
+
+    RmqHelper.publishEvent('stock.opname.approved', {
+      data: {
+        stockNotScanned : productsLost,
+        id: updateStockOpname.id,
+        trans_date: new Date(),
+      },
+      user: approve_by,
+    });
 
     return CustomResponse.success(
       'Successfully update stock opname',
@@ -314,8 +311,6 @@ export class StockOpnameService extends BaseService {
       throw new RpcException('Stock Opname not found');
     }
 
-    // Add logic to check the disapprove by if needed!
-
     const updateStockOpname = await this.stockOpnameRepository.update(
       id,
       {
@@ -326,14 +321,35 @@ export class StockOpnameService extends BaseService {
       },
       disapprove_by,
     );
-    const scanned = updateStockOpname.details;
-    const stockNotScanned = await this.stockOpnameRepository.findNotScanned(
-      id,
-      scanned,
-    );
-    console.log('stock not scanned : ', stockNotScanned);
+    
+    const prevProductsLost = [];
+    for (const stock of updateStockOpname.details) {
+      if (!stock.scanned && stock.productCode.taken_out_reason == 4) {
+        const prodCode =  await this.productCodeRepository.update(stock.product_code_id, {
+          status: 0,
+          taken_out_at: null,
+          taken_out_reason: 0, // lost karena opname
+          taken_out_by: null,
+        });
+        RmqHelper.publishEvent('product.code.updated', {
+          data: {
+            ...prodCode,
+            status: 0,
+            taken_out_at: null,
+            taken_out_reason: 0,
+            taken_out_by: null,
+            updated_at: new Date(),
+          },
+          user: disapprove_by,
+        });
+        prevProductsLost.push(prodCode);
+      }
+    }
     RmqHelper.publishEvent('stock.opname.disapproved', {
-      data: { stockNotScanned, id },
+      data: { 
+        stockNotScanned: prevProductsLost, 
+        id 
+      },
       user: disapprove_by,
     });
 

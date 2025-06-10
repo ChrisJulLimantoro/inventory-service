@@ -21,28 +21,6 @@ export class StockOpnameRepository extends BaseRepository<any> {
     super(prisma, 'stockOpname', relations, true);
   }
 
-  async findNotScanned(id: any, scanned: any) {
-    const stockOpname = await this.findOne(id);
-    const reformatScanned = scanned.map((scan) => scan.product_code_id);
-    const AllProductCode = await this.productService
-      .getAllProductCode({
-        product: {
-          store_id: stockOpname.store_id,
-          type: {
-            category_id: stockOpname.category_id,
-          },
-        },
-        status: {
-          in: [0, 2],
-        },
-      })
-      .then((res) => res.data.data);
-    const result = AllProductCode.filter(
-      (productCode) => !reformatScanned.includes(productCode.id),
-    );
-
-    return result;
-  }
 
   async getProductCodes(category_id: any) {
     return this.prisma.productCode.findMany({

@@ -86,7 +86,7 @@ model ProductCode {
   fixed_price   Decimal    @db.Decimal
   status       Int       @default(0) // 0: Available 1: Sold 2: Returned 3: Taken Out by the Owner
   taken_out_at DateTime?
-  taken_out_reason Int  @default(0) // 0: none, 1: repair, 2: lost, 3: taken out by the owner
+  taken_out_reason Int  @default(0) // 0: none, 1: repair, 2: lost, 3: taken out by the owner, 4 : lost after opname
   taken_out_by String?   @db.Uuid
   buy_price    Decimal   @default(0) @db.Decimal
   tax_purchase Decimal   @default(0) @db.Decimal
