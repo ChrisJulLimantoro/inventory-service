@@ -93,6 +93,7 @@ model ProductCode {
   image        String?
   account_id   String?   @db.Uuid //account_id used when purchase product code
   certificate_link String?
+  is_active    Boolean @default(true)
 
   product Product @relation(fields: [product_id], references: [id])
   StockOpnameDetails StockOpnameDetail[]

@@ -8,8 +8,10 @@ export class CreateProductCodeDto {
   image: string;
   fixed_price: number;
   buy_price: number;
-  tax_purchase: number | null;
+  tax_purchase?: number;
   account_id: string;
+  certificate_link?: string;
+  is_active: boolean;
 
   constructor({
     barcode,
@@ -21,6 +23,8 @@ export class CreateProductCodeDto {
     tax_purchase,
     account_id,
     image,
+    certificate_link,
+    is_active = true,
   }) {
     this.barcode = barcode;
     this.product_id = product_id;
@@ -31,6 +35,8 @@ export class CreateProductCodeDto {
     this.buy_price = parseFloat(buy_price);
     this.tax_purchase = parseFloat(tax_purchase);
     this.account_id = account_id;
+    this.certificate_link = certificate_link;
+    this.is_active = is_active;
   }
 
   static schema() {
@@ -48,6 +54,8 @@ export class CreateProductCodeDto {
           message: 'Kas/Bank is required',
         })
         .uuid(),
+      certificate_link: z.string().nullable().optional(),
+      is_active: z.boolean(),
     });
   }
 }
