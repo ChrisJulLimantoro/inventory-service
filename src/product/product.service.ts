@@ -488,8 +488,12 @@ export class ProductService extends BaseService {
       validated,
       UpdateProductCodeDto.schema(),
     );
-    await this.productCodeRepository.update(id, updateData, user_id);
-    return CustomResponse.success('Product code updated!', null, 200);
+    const response = await this.productCodeRepository.update(
+      id,
+      updateData,
+      user_id,
+    );
+    return CustomResponse.success('Product code updated!', response, 200);
   }
 
   async deleteProductCode(id: any, user_id?: string) {
