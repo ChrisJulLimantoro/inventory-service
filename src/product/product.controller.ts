@@ -158,6 +158,9 @@ export class ProductController {
         data: response.data,
         user: param.user.id,
       });
+      for (const i of response.data.product_codes) {
+        this.service.deleteProductCode(i.id, param.user.id);
+      }
     }
     return response;
   }
