@@ -11,6 +11,7 @@ export class ProductCodeRepository extends BaseRepository<any> {
           type: {
             include: {
               category: true,
+              prices: true,
             },
           },
           store: {
