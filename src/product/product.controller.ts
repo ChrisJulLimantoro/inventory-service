@@ -162,7 +162,7 @@ export class ProductController {
         const resp = await this.service.deleteProductCode(i.id, param.user.id);
         if (resp) {
           RmqHelper.publishEvent('product.code.deleted', {
-            data: response.data,
+            data: resp.data,
             user: param.user.id,
           });
         }
