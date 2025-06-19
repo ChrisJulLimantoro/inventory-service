@@ -11,7 +11,11 @@ export class ProductCodeRepository extends BaseRepository<any> {
           type: {
             include: {
               category: true,
-              prices: true,
+              prices: {
+                where: {
+                  deleted_at: null,
+                },
+              },
             },
           },
           store: {
