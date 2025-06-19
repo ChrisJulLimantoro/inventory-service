@@ -466,6 +466,10 @@ export class ProductController {
         data: response.data,
         user: param.user.id,
       });
+      RmqHelper.publishEvent('finance.code.updated', {
+        data: response.data,
+        user: param.user.id,
+      });
     }
     return response;
   }
