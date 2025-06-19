@@ -21,7 +21,6 @@ export class StockOpnameRepository extends BaseRepository<any> {
     super(prisma, 'stockOpname', relations, true);
   }
 
-
   async getProductCodes(category_id: any) {
     return this.prisma.productCode.findMany({
       where: {
@@ -30,6 +29,7 @@ export class StockOpnameRepository extends BaseRepository<any> {
             category_id: category_id,
           },
         },
+        deleted_at: null,
       },
     });
   }

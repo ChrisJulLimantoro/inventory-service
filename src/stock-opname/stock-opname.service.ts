@@ -264,16 +264,19 @@ export class StockOpnameService extends BaseService {
     // }
     // ]
     console.log('this is stock details', updateStockOpname.details);
-      // publish to Others
+    // publish to Others
     const productsLost = [];
     for (const stock of updateStockOpname.details) {
       if (!stock.scanned && stock.productCode.status == 0) {
-        const prodCode =  await this.productCodeRepository.update(stock.product_code_id, {
-          status: 3,
-          taken_out_at: new Date(),
-          taken_out_reason: 4, // lost karena opname
-          taken_out_by: approve_by,
-        });
+        const prodCode = await this.productCodeRepository.update(
+          stock.product_code_id,
+          {
+            status: 3,
+            taken_out_at: new Date(),
+            taken_out_reason: 4, // lost karena opname
+            taken_out_by: approve_by,
+          },
+        );
         RmqHelper.publishEvent('product.code.updated', {
           data: {
             ...prodCode,
@@ -291,7 +294,7 @@ export class StockOpnameService extends BaseService {
 
     RmqHelper.publishEvent('stock.opname.approved', {
       data: {
-        stockNotScanned : productsLost,
+        stockNotScanned: productsLost,
         id: updateStockOpname.id,
         trans_date: new Date(),
       },
@@ -321,16 +324,19 @@ export class StockOpnameService extends BaseService {
       },
       disapprove_by,
     );
-    
+
     const prevProductsLost = [];
     for (const stock of updateStockOpname.details) {
       if (!stock.scanned && stock.productCode.taken_out_reason == 4) {
-        const prodCode =  await this.productCodeRepository.update(stock.product_code_id, {
-          status: 0,
-          taken_out_at: null,
-          taken_out_reason: 0, // lost karena opname
-          taken_out_by: null,
-        });
+        const prodCode = await this.productCodeRepository.update(
+          stock.product_code_id,
+          {
+            status: 0,
+            taken_out_at: null,
+            taken_out_reason: 0, // lost karena opname
+            taken_out_by: null,
+          },
+        );
         RmqHelper.publishEvent('product.code.updated', {
           data: {
             ...prodCode,
@@ -346,9 +352,9 @@ export class StockOpnameService extends BaseService {
       }
     }
     RmqHelper.publishEvent('stock.opname.disapproved', {
-      data: { 
-        stockNotScanned: prevProductsLost, 
-        id 
+      data: {
+        stockNotScanned: prevProductsLost,
+        id,
       },
       user: disapprove_by,
     });
