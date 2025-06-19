@@ -159,7 +159,13 @@ export class ProductController {
         user: param.user.id,
       });
       for (const i of response.data.product_codes) {
-        this.service.deleteProductCode(i.id, param.user.id);
+        const resp = await this.service.deleteProductCode(i.id, param.user.id);
+        if (resp) {
+          RmqHelper.publishEvent('product.code.deleted', {
+            data: response.data,
+            user: param.user.id,
+          });
+        }
       }
     }
     return response;
