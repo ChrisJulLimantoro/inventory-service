@@ -579,14 +579,9 @@ export class ProductService extends BaseService {
         // To Transaction
         RmqHelper.publishEvent('product.code.updated', {
           data: {
-            id: code.id,
-            barcode: code.barcode,
-            product_id: code.product_id,
+            ...code,
             status: 0,
             weight: weight,
-            fixed_price: code.fixed_price,
-            taken_out_at: null,
-            buy_price: code.buy_price,
           },
           user: user_id,
         });
