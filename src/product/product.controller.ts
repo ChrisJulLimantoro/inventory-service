@@ -367,7 +367,14 @@ export class ProductController {
   })
   async getStockOut(@Payload() data: any): Promise<CustomResponse> {
     const filter = {
-      status: 3,
+      OR: [
+        {
+          status: 3,
+        },
+        {
+          taken_out_reason: 1
+        },
+      ],
       product: {
         store_id: data.body.auth.store_id,
         type: {

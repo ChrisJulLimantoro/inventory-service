@@ -123,7 +123,7 @@ export class ProductService extends BaseService {
     search?: string,
   ) {
     filter = filter || {};
-    filter.status = 3;
+    // filter.status = 3;
     const store = await this.prisma.store.findUnique({
       where: {
         id: store_id,
