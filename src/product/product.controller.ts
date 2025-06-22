@@ -463,6 +463,7 @@ export class ProductController {
   async updateProductCode(@Payload() data: any): Promise<CustomResponse> {
     const param = data.params;
     const body = data.body;
+    // console.log('Update Product Code', param.id, body);
     const response = await this.service.updateProductCode(
       param.id,
       body,
@@ -473,10 +474,12 @@ export class ProductController {
         data: response.data,
         user: param.user.id,
       });
-      RmqHelper.publishEvent('finance.code.updated', {
-        data: response.data,
-        user: param.user.id,
-      });
+      if (body.taken_out_reason == 0 && body.status == 0) {
+        RmqHelper.publishEvent('finance.code.updated', {
+          data: response.data,
+          user: param.user.id,
+        });
+      }
     }
     return response;
   }
