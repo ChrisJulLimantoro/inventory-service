@@ -30,6 +30,10 @@ export class CategoryController {
       'inventory/product:add',
       'inventory/product:edit',
       'inventory/product:detail',
+      'transaction/purchase:add',
+      'transaction/purchase:edit',
+      'transaction/trade:add',
+      'transaction/trade:edit',
     ],
   })
   async findAll(@Payload() data: any): Promise<CustomResponse> {
