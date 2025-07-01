@@ -87,7 +87,7 @@ export abstract class BaseService {
     }
     const validatedData = this.validation.validate(data, this.updateSchema);
     const newData = await this.repository.update(id, validatedData, user_id);
-    return CustomResponse.success('Data Updated!', newData, 200);
+    return CustomResponse.success('Data Updated!', newData, 204);
   }
 
   // Delete
@@ -97,7 +97,7 @@ export abstract class BaseService {
       return CustomResponse.error('Data not found', null, 404);
     }
     await this.repository.delete(id, user_id);
-    return CustomResponse.success('Data deleted!', data, 200);
+    return CustomResponse.success('Data deleted!', data, 204);
   }
 
   async bulkCreate(
